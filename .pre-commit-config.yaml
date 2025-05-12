@@ -15,7 +15,7 @@ repos:
     - --max-line-length=120
     - --show-source
     - --statistics
-    - --ignore=E203,W501,W503,F405
+    - --ignore=E203,W501,W503,F405,F401,F403
 
 - repo: https://github.com/pre-commit/mirrors-isort
   rev: v5.9.3

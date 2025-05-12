@@ -1,0 +1,136 @@
+version: '3.7'
+
+services:
+  athena_webapp:
+    container_name: athena_webapp
+    build:
+        context: .
+        dockerfile: ./environments/dev/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - PORT=${PORT}
+    volumes:
+      - .:/app
+      - ./environments/dev/start-webapp.sh:/start-webapp.sh
+    ports:
+      - "${PORT}:${PORT}"
+    depends_on:
+      - athena_db
+      - redis
+    entrypoint:
+      - /start-webapp.sh
+
+  athena_db:
+    image: postgres:17
+    expose:
+      - "${POSTGRES_PORT}"
+    ports:
+        - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    command: -p ${POSTGRES_PORT}
+
+  athena_test_db:
+    image: postgres:17
+    container_name: db_test
+    expose:
+      - "${TEST_POSTGRES_PORT}"
+    ports:
+        - "${TEST_POSTGRES_PORT}:${TEST_POSTGRES_PORT}"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${TEST_POSTGRES_DB}
+      - POSTGRES_USER=${TEST_POSTGRES_USER}
+      - POSTGRES_PASSWORD=${TEST_POSTGRES_PASSWORD}
+      - POSTGRES_HOST_AUTH_METHOD=trust
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8
+      - POSTGRES_PORT=${TEST_POSTGRES_PORT}
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data/
+    command: -p ${TEST_POSTGRES_PORT}
+
+
+  redis:
+    image: redis:7
+    container_name: athena-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  celery-worker:
+    container_name: athena-celery-worker
+    build:
+      context: .
+      dockerfile: ./environments/dev/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - athena_db
+      - redis
+    command: celery -A config worker -l INFO
+
+  celery-beat:
+    container_name: athena-celery-beat
+    build:
+      context: .
+      dockerfile: ./environments/dev/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    depends_on:
+      - athena_db
+      - redis
+      - celery-worker
+    command: celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+  flower:
+    container_name: athena-flower
+    build:
+      context: .
+      dockerfile: ./environments/dev/Dockerfile
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery-worker
+    command: celery -A config flower --port=5555
+
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: athena-ollama
+  #   restart: always
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #     - ./environments/dev/init-ollama.sh:/init-ollama.sh
+  #   entrypoint: ["/init-ollama.sh"]
+
+volumes:
+  postgres_data:
+  postgres_test_data:
+  # ollama_data:
