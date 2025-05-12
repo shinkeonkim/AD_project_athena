@@ -1,0 +1,73 @@
+{% load static %}
+{% load agent_extras %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="search-container">
+                <label for="problem-search">문제 검색:</label>
+                <div class="autocomplete-wrapper">
+                    <input type="text" id="problem-search" placeholder="문제 이름을 입력하세요">
+                    <div id="autocomplete-results" class="autocomplete-results"></div>
+                </div>
+            </div>
+
+            <div class="language-selector">
+                <label for="language-select">프로그래밍 언어 선택:</label>
+                <select id="language-select" class="language-dropdown">
+                    <option value="cpp">C++</option>
+                    <option value="python">Python</option>
+                    <option value="java">Java</option>
+                    <option value="ruby">Ruby</option>
+                </select>
+            </div>
+
+            <div class="editor-container">
+                <label for="code-editor">코드 에디터:</label>
+                <textarea id="code-editor" spellcheck="false"></textarea>
+            </div>
+
+            <button id="submit-btn" class="submit-button" disabled>제출하기</button>
+        </div>
+
+        <div class="right-panel">
+            <div class="problem-info" id="problem-info">
+                <h2>문제 정보</h2>
+                <div class="problem-content">
+                    <h3>문제 제목</h3>
+                    <p>{{ problem.description|problem_content|safe }}</p>
+
+                    <h4>입력 형식</h4>
+                    <p>{{ problem.input_description|problem_content|safe }}</p>
+
+                    <h4>출력 형식</h4>
+                    <p>{{ problem.output_description|problem_content|safe }}</p>
+
+                    <h4>예제 입력</h4>
+                    <pre>{{ problem.test_cases.first.input_data|safe }}</pre>
+
+                    <h4>예제 출력</h4>
+                    <pre>{{ problem.test_cases.first.output_data|safe }}</pre>
+                </div>
+            </div>
+
+            <div class="feedback-area">
+                <h2>피드백</h2>
+                <div id="feedback-content" class="markdown-content">
+                    <p>코드를 제출하면 피드백이 여기에 표시됩니다.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'script.js' %}"></script>
+</body>
+</html>
