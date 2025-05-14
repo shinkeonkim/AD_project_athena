@@ -1,0 +1,497 @@
+/* 브레드크럼 스타일 */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  margin: 15px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  color: var(--primary);
+  text-decoration: none;
+  transition: all 0.3s;
+}
+
+.breadcrumb-item:hover {
+  color: white;
+}
+
+.breadcrumb-separator {
+  margin: 0 10px;
+  color: var(--gray-300);
+}
+
+.breadcrumb-current {
+  color: var(--gray-300);
+}
+
+/* 메인 컨테이너 */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 80px); /* 브레드크럼 높이 고려 */
+  padding: 0 20px 20px;
+}
+
+/* 코딩 문제 페이지 스타일 */
+.coding-container {
+  display: flex;
+  gap: 20px;
+  height: 100%;
+  width: 100%;
+}
+
+/* 왼쪽 패널 스타일 (문제 검색 및 정보) */
+.left-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 오른쪽 패널 스타일 (코드 에디터) */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: 12px;
+  height: 100%;
+}
+
+/* 검색 및 언어 선택 컨테이너 */
+.controls-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 0;
+  z-index: 100;
+}
+
+.search-container {
+  flex: 2;
+  z-index: 100;
+}
+
+.language-selector {
+  flex: 1;
+}
+
+.search-container,
+.language-selector,
+.editor-container {
+  margin-bottom: 15px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+}
+
+/* 자동완성 스타일 */
+.autocomplete-wrapper {
+  position: relative;
+  z-index: 100;
+}
+
+#problem-search {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(12, 234, 217, 0.3);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--text);
+  background-color: transparent;
+  transition: all 0.3s;
+}
+
+#problem-search:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(12, 234, 217, 0.3);
+}
+
+.autocomplete-results {
+  position: absolute;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid rgba(12, 234, 217, 0.3);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  z-index: 100;
+  display: none;
+}
+
+.autocomplete-item {
+  padding: 12px;
+  cursor: pointer;
+  color: var(--gray-300);
+  transition: all 0.2s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.autocomplete-item:hover {
+  background-color: rgba(12, 234, 217, 0.1);
+  color: var(--primary);
+}
+
+.problem-id {
+  font-weight: bold;
+  color: var(--primary);
+  margin-right: 10px;
+}
+
+.problem-title {
+  flex: 1;
+}
+
+.problem-level {
+  font-size: 0.85em;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: rgba(22, 33, 49, 0.5);
+}
+
+.level-easy {
+  color: #4caf50;
+}
+
+.level-medium {
+  color: #ff9800;
+}
+
+.level-hard {
+  color: #f44336;
+}
+
+/* 언어 선택 스타일 */
+.language-dropdown {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(12, 234, 217, 0.3);
+  border-radius: 8px;
+  font-size: 16px;
+  color: var(--text);
+  background-color: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230cead9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 1em;
+  transition: all 0.3s;
+}
+
+.language-dropdown:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(12, 234, 217, 0.3);
+}
+
+/* 코드 에디터 스타일 */
+.editor-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#code-editor {
+  width: 100%;
+  flex: 1;
+  padding: 15px;
+  border: 1px solid rgba(12, 234, 217, 0.3);
+  border-radius: 8px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  color: var(--text);
+  background-color: transparent;
+  transition: all 0.3s;
+  margin-bottom: 15px;
+}
+
+#code-editor:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 10px rgba(12, 234, 217, 0.3);
+}
+
+.problem-info {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  border-radius: 12px;
+  display: flex;
+  z-index: 0;
+  flex-direction: column;
+}
+
+.problem-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 15px;
+}
+
+.feedback-area {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+}
+
+.markdown-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 15px;
+  line-height: 1.6;
+}
+
+.problem-content h3 {
+  margin-bottom: 15px;
+}
+
+.problem-content h4 {
+  margin: 15px 0 5px;
+}
+
+.problem-content pre {
+  padding: 15px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid rgba(12, 234, 217, 0.1);
+  font-family: "Courier New", Courier, monospace;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: var(--primary);
+}
+
+.markdown-content p {
+  margin-bottom: 10px;
+}
+
+.markdown-content pre {
+  background-color: rgba(22, 33, 49, 0.3);
+  padding: 15px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 10px 0;
+  border: 1px solid rgba(12, 234, 217, 0.1);
+  font-family: "Courier New", Courier, monospace;
+}
+
+.markdown-content code {
+  font-family: "Courier New", Courier, monospace;
+  background-color: rgba(22, 33, 49, 0.3);
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: var(--primary);
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+/* 로딩 애니메이션 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(12, 234, 217, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--primary);
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 알림 스타일 */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  z-index: 1000;
+  max-width: 350px;
+  transform: translateX(120%);
+  transition: transform 0.3s ease;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: var(--gray-300);
+  font-size: 20px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.notification-success {
+  border-left: 4px solid #4caf50;
+}
+
+.notification-error {
+  border-left: 4px solid #f44336;
+}
+
+.notification-info {
+  border-left: 4px solid var(--primary);
+}
+
+/* 문제 정보 스타일 */
+.problem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(12, 234, 217, 0.2);
+}
+
+.problem-description {
+  margin-bottom: 20px;
+}
+
+.problem-section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  margin-bottom: 15px;
+  font-size: 1.5rem;
+}
+
+.section-subtitle {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.test-cases-container {
+  margin-top: 30px;
+}
+
+.test-case {
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.extra-info {
+  margin: 20px 0;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.extra-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.extra-info li {
+  margin-bottom: 8px;
+}
+
+.info-label {
+  color: var(--primary);
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1024px) {
+  .coding-container {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .main-container {
+    height: auto;
+    min-height: calc(100vh - 80px);
+  }
+
+  .controls-container {
+    flex-direction: column;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100%;
+    height: auto;
+  }
+
+  .problem-info,
+  .feedback-area {
+    height: 300px;
+  }
+
+  #code-editor {
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .breadcrumb {
+    margin: 10px;
+  }
+
+  .main-container {
+    padding: 0 10px 10px;
+  }
+
+  .problem-info,
+  .feedback-area {
+    height: 250px;
+  }
+}
+
+@media (max-height: 800px) {
+  .problem-info,
+  .feedback-area {
+    height: 200px;
+  }
+}

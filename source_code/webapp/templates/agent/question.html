@@ -1,0 +1,92 @@
+{% load static %}
+{% load agent_extras %}
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena</title>
+    <link rel="stylesheet" href="{% static 'main/styles.css' %}?v=1.0.0">
+    <link rel="stylesheet" href="{% static 'agent/question/styles.css' %}?v=1.0.0">
+</head>
+<body>
+    <div class="min-h-screen bg-wrapper">
+        <div class="animated-bg"></div>
+        <div class="content">
+            <!-- 브레드크럼 네비게이션 -->
+            <div class="breadcrumb glass-light">
+                <a href="/" class="breadcrumb-item">
+                    <div class="flex items-center gap-2">
+                        <div class="relative h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary-50 glow">
+                            <div class="absolute inset-0 flex items-center justify-center text-bg-dark">
+                                <span class="text-sm font-bold">A</span>
+                            </div>
+                        </div>
+                        <span class="text-white">Athena</span>
+                    </div>
+                </a>
+                <span class="breadcrumb-separator">/</span>
+                <span class="breadcrumb-current">BOJ 문제 도우미</span>
+            </div>
+
+            <!-- 코딩 문제 컨테이너 -->
+            <div class="main-container">
+                <div class="coding-container">
+                    <!-- 왼쪽 패널 (문제 검색 및 정보) -->
+                    <div class="left-panel">
+                        <!-- 검색 및 언어 선택 영역 -->
+                        <div class="controls-container glass">
+                            <div class="search-container">
+                                <label for="problem-search" class="text-primary font-bold">문제 검색:</label>
+                                <div class="autocomplete-wrapper">
+                                    <input type="text" id="problem-search" class="glass-light" placeholder="문제 이름을 입력하세요">
+                                    <div id="autocomplete-results" class="autocomplete-results glass-dark"></div>
+                                </div>
+                            </div>
+
+                            <div class="language-selector">
+                                <label for="language-select" class="text-primary font-bold">프로그래밍 언어:</label>
+                                <select id="language-select" class="language-dropdown glass-light">
+                                    <option value="cpp">C++</option>
+                                    <option value="python">Python</option>
+                                    <option value="java">Java</option>
+                                    <option value="ruby">Ruby</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="problem-info glass" id="problem-info">
+                            <h2 class="text-primary font-bold">문제 정보</h2>
+                            <div class="problem-content">
+                                <h3 class="text-white">문제를 검색하여 선택해주세요</h3>
+                                <p class="text-gray-300">위 검색창에서 문제를 검색하고 선택하면 문제 정보가 여기에 표시됩니다.</p>
+                            </div>
+                        </div>
+
+                        <div class="feedback-area glass">
+                            <h2 class="text-primary font-bold">피드백</h2>
+                            <div id="feedback-content" class="markdown-content text-gray-300">
+                                <p>코드를 제출하면 피드백이 여기에 표시됩니다.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 오른쪽 패널 (코드 에디터) -->
+                    <div class="right-panel glass">
+                        <div class="editor-container">
+                            <label for="code-editor" class="text-primary font-bold">코드 에디터:</label>
+                            <textarea id="code-editor" class="glass-light" spellcheck="false"></textarea>
+                        </div>
+
+                        <button id="submit-btn" class="btn btn-primary glow w-full" disabled>제출하기</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'main/script.js' %}?v=1.0.0"></script>
+    <script src="{% static 'agent/question/script.js' %}?v=1.0.0"></script>
+</body>
+</html>
