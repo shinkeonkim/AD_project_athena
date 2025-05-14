@@ -5,6 +5,8 @@ import requests
 from agent.models import QuestionTask, QuestionTaskStatus
 from celery import shared_task
 from django.conf import settings
+from django.db import transaction
+from user.models import Ticket
 
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
@@ -78,6 +80,11 @@ def process_question_task(task_uuid):
         task.save()
 
     except Exception as e:
-        task.status = QuestionTaskStatus.FAILED
-        task.save()
+        with transaction.atomic():
+            task.status = QuestionTaskStatus.FAILED
+            user = task.user
+            ticket, _ = Ticket.objects.get_or_create(user=user)
+            ticket.decrease_usage()
+            ticket.save()
+            task.save()
         raise e
