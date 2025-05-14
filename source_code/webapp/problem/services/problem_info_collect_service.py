@@ -32,11 +32,9 @@ class ProblemInfoCollectService:
         if not element:
             return ""
 
-        # Convert to string and parse with lxml
-        html_str = str(element)
-        tree = html.fromstring(html_str)
+        tree = html.fromstring(str(element))
 
-        # Process image URLs
+        # 이미지 주소를 백준 주소로 대체하여 저장합니다.
         for img in tree.xpath("//img"):
             src = img.get("src", "")
             if src.startswith("/"):
@@ -44,33 +42,22 @@ class ProblemInfoCollectService:
 
         # Process superscript and subscript elements
         for sup in tree.xpath("//sup"):
-            # Create a new element with the same content
             new_sup = etree.Element("sup")
             new_sup.text = sup.text
             new_sup.set("class", "math-sup")
             new_sup.set("data-exponent", sup.text)
-            # Replace the old element with the new one
             sup.getparent().replace(sup, new_sup)
 
         for sub in tree.xpath("//sub"):
-            # Create a new element with the same content
             new_sub = etree.Element("sub")
             new_sub.text = sub.text
             new_sub.set("class", "math-sub")
             new_sub.set("data-subscript", sub.text)
-            # Replace the old element with the new one
             sub.getparent().replace(sub, new_sub)
 
-        # Convert the tree back to string
         processed_html = etree.tostring(tree, encoding="unicode", method="html")
 
-        # Create a new BeautifulSoup object to handle text nodes
         soup = BeautifulSoup(processed_html, "lxml")
-
-        # Process text nodes to handle < and > characters
-        # for text in soup.find_all(text=True):
-        #     if text.parent.name not in ['sup', 'sub', 'code', 'pre']:
-        # text.replace_with(text.replace('<', '&lt;').replace('>', '&gt;'))
 
         return str(soup)
 

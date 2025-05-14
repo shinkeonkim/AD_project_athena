@@ -10,15 +10,12 @@ class ProblemViewSet(viewsets.ViewSet):
         search_query = request.GET.get("search", "")
 
         if search_query:
-            # Create search vector for title, description, and boj_id
             search_vector = SearchVector("title", weight="A") + SearchVector(
                 "boj_id", weight="B"
             )
 
-            # Create search query
             query = SearchQuery(search_query)
 
-            # Perform search with ranking
             problems = (
                 Problem.objects.annotate(rank=SearchRank(search_vector, query))
                 .filter(
@@ -29,7 +26,6 @@ class ProblemViewSet(viewsets.ViewSet):
                 .order_by("-rank", "boj_id")[:10]
             )
 
-            # Convert to dictionary with rank
             problems = problems.values("id", "boj_id", "title", "level", "rank")
         else:
             problems = Problem.objects.order_by("boj_id").values(
