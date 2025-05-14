@@ -1,9 +1,10 @@
 from django.contrib import admin
+from unfold.admin import ModelAdmin
 from user.models.ticket import Ticket
 
 
 @admin.register(Ticket)
-class TicketAdmin(admin.ModelAdmin):
+class TicketAdmin(ModelAdmin):
     list_display = (
         "user",
         "usage_per_day",
