@@ -1,4 +1,5 @@
 from config.models import BaseModel
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 
 
@@ -9,6 +10,13 @@ class Problem(BaseModel):
 
     class Meta:
         db_table = "problems"
+        indexes = [
+            models.Index(fields=["boj_id"]),
+            models.Index(fields=["title"]),
+            models.Index(fields=["level"]),
+            GinIndex(fields=["title"]),
+            GinIndex(fields=["boj_id"]),
+        ]
 
     boj_id = models.IntegerField(unique=True, null=False, blank=False)
     title = models.TextField(null=False, blank=False)

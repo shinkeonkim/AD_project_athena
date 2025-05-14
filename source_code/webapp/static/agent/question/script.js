@@ -313,7 +313,7 @@ solution`
         } else {
             autocompleteResults.innerHTML = `
                 <div class="autocomplete-no-results">
-                    <span class="text-gray-300">검색 결과가 없습니다</span>
+                    <span class="autocomplete-item text-gray-300 p-5">검색 결과가 없습니다</span>
                 </div>
             `;
         }
