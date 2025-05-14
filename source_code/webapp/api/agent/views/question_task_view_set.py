@@ -34,6 +34,7 @@ class QuestionTaskViewSet(viewsets.ModelViewSet):
 
         with transaction.atomic():
             ticket.increase_usage()
+            ticket.update_last_used_at()
 
             task = QuestionTask.objects.create(
                 problem_id=problem_id,

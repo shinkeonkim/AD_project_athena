@@ -90,6 +90,10 @@ class Ticket(BaseModel):
     def decrease_usage(self):
         self.update_usage(-1)
 
+    def update_last_used_at(self):
+        self.last_used_at = timezone.now()
+        self.save()
+
     def is_usage_limit_exceeded(self):
         self.reset_usage()
 
