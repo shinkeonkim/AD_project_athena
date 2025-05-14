@@ -1,0 +1,28 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Athena - 알고리즘 풀이 AI</title>
+    <link rel="stylesheet" href="{% static 'main/styles.css' %}">
+    {% block head %}
+    {% endblock head %}
+</head>
+<body>
+    <div class="min-h-screen bg-wrapper">
+        <div class="animated-bg"></div>
+        <div class="content">
+            <!-- 헤더 -->
+            {% block header %}
+            {% endblock header %}
+
+            {% block content %}
+            {% endblock content %}
+        </div>
+    </div>
+
+    {% block script %}
+    {% endblock script %}
+</body>
+</html>

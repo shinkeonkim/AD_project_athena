@@ -25,6 +25,7 @@ urlpatterns = [
     path("agents/", include("agent.urls")),
     path("", include("main.urls")),
     path("api/", include("api.urls")),
+    path("user/", include("user.urls")),
 ]
 
 urlpatterns += [
