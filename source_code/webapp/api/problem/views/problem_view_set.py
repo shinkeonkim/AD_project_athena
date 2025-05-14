@@ -32,9 +32,9 @@ class ProblemViewSet(viewsets.ViewSet):
             # Convert to dictionary with rank
             problems = problems.values("id", "boj_id", "title", "level", "rank")
         else:
-            problems = Problem.objects.all().values("id", "boj_id", "title", "level")[
-                :10
-            ]
+            problems = Problem.objects.order_by("boj_id").values(
+                "id", "boj_id", "title", "level"
+            )[:10]
 
         return Response(list(problems), status=status.HTTP_200_OK)
 

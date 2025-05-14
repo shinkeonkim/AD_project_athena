@@ -15,6 +15,7 @@
             <nav class="hidden items-center gap-6 md-flex">
                 {% if request.user.is_authenticated %}
                     <a href="{% url 'agent:question' %}" class="text-gray-300 hover-text-primary">BOJ Assist</a>
+                    <a href="{% url 'agent:question_task_list' %}" class="text-gray-300 hover-text-primary">질문 기록</a>
                 {% endif %}
                 <a href="#features" class="text-gray-300 hover-text-primary">기능</a>
                 <a href="#pricing" class="text-gray-300 hover-text-primary">가격</a>
@@ -92,6 +93,10 @@
     <div id="mobile-menu" class="glass-dark md-hidden hidden">
         <div class="container py-4">
             <nav class="flex flex-col space-y-4">
+                {% if request.user.is_authenticated %}
+                    <a href="{% url 'agent:question' %}" class="py-2 text-gray-300 hover-text-primary">BOJ Assist</a>
+                    <a href="{% url 'agent:question_task_list' %}" class="py-2 text-gray-300 hover-text-primary">질문 기록</a>
+                {% endif %}
                 <a href="#features" class="py-2 text-gray-300 hover-text-primary">기능</a>
                 <a href="#pricing" class="py-2 text-gray-300 hover-text-primary">가격</a>
                 <a href="#faq" class="py-2 text-gray-300 hover-text-primary">FAQ</a>

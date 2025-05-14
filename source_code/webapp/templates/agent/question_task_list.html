@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block head %}
+<link rel="stylesheet" href="{% static 'main/styles.css' %}?v=1.0.0">
+<link rel="stylesheet" href="{% static 'agent/question_task_list/styles.css' %}?v=1.0.0">
+{% endblock head %}
+
+{% block header %}
+{% include "_breadcrumb.html" %}
+{% endblock header %}
+
+{% block content %}
+<div class="main-container">
+    <div class="task-list-container glass">
+        <h2 class="text-primary font-bold mb-4">나의 문제 풀이 기록</h2>
+
+        {% if page_obj %}
+            <div class="task-list">
+                {% for task in page_obj %}
+                    <div class="task-item glass-light">
+                        <div class="task-header">
+                            <div class="task-info">
+                                <h3 class="text-white font-bold">[{{ task.problem.boj_id }}] {{ task.problem.title }}</h3>
+                                <div class="task-meta">
+                                    <span class="text-gray-300">{{ task.created_at|date:"Y-m-d H:i" }}</span>
+                                    <span class="status-badge {{ task.status|lower }}">{{ task.status }}</span>
+                                </div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn btn-secondary expand-btn" data-task-id="{{ task.id }}">
+                                    더보기
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="task-details" id="task-{{ task.id }}" style="display: none;">
+                            <div class="detail-section">
+                                <h4 class="text-primary">사용 언어</h4>
+                                <p class="text-gray-300">{{ task.language }}</p>
+                            </div>
+
+                            <div class="detail-section">
+                                <h4 class="text-primary">제출 코드</h4>
+                                <div class="code-preview">
+                                    <pre><code>{{ task.code|truncatechars:200 }}</code></pre>
+                                    <button class="btn btn-secondary view-full-code" data-code="{{ task.code }}">
+                                        전체 코드 보기
+                                    </button>
+                                </div>
+                            </div>
+
+                            {% if task.feedback %}
+                            <div class="detail-section">
+                                <h4 class="text-primary">피드백</h4>
+                                <div class="feedback-preview">
+                                    <p class="text-gray-300">{{ task.feedback|truncatechars:200 }}</p>
+                                    <button class="btn btn-secondary view-full-feedback" data-feedback="{{ task.feedback }}">
+                                        전체 피드백 보기
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if task.code_result %}
+                            <div class="detail-section">
+                                <h4 class="text-primary">실행 결과</h4>
+                                <div class="result-preview">
+                                    <pre><code>{{ task.code_result|truncatechars:200 }}</code></pre>
+                                    <button class="btn btn-secondary view-full-result" data-result="{{ task.code_result }}">
+                                        전체 결과 보기
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- 페이지네이션 -->
+            <div class="pagination glass">
+                {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">&lt;</a>
+                {% endif %}
+
+                {% with ''|center:page_obj.paginator.num_pages as range %}
+                {% for _ in range %}
+                    {% with forloop.counter as page_number %}
+                        {% if page_number == page_obj.number %}
+                            <span class="current-page">{{ page_number }}</span>
+                        {% elif page_number > page_obj.number|add:"-4" and page_number < page_obj.number|add:"4" %}
+                            <a href="?page={{ page_number }}" class="btn btn-secondary">{{ page_number }}</a>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+                {% endwith %}
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">&gt;</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="no-tasks glass-light">
+                <p class="text-gray-300">아직 풀이한 문제가 없습니다.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- 모달 -->
+<div id="modal" class="modal">
+    <div class="modal-content glass">
+        <span class="close">&times;</span>
+        <div class="modal-body">
+            <pre><code id="modal-content"></code></pre>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script src="{% static 'agent/question_task_list/script.js' %}?v=1.0.0"></script>
+{% endblock script %}
