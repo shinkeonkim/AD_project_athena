@@ -9,11 +9,15 @@ class ProblemViewSet(viewsets.ViewSet):
         search_query = request.GET.get("search", "")
 
         if search_query:
-            problems = Problem.objects.filter(
-                Q(title__icontains=search_query)
-                | Q(description__icontains=search_query)
-                | Q(boj_id__icontains=search_query)
-            ).values("id", "boj_id", "title", "level")[:10]
+            problems = (
+                Problem.objects.order_by("boj_id")
+                .filter(
+                    Q(title__icontains=search_query)
+                    | Q(description__icontains=search_query)
+                    | Q(boj_id__icontains=search_query)
+                )
+                .values("id", "boj_id", "title", "level")[:10]
+            )
         else:
             problems = Problem.objects.all().values("id", "boj_id", "title", "level")[
                 :10

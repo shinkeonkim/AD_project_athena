@@ -9,6 +9,11 @@
     <title>Athena</title>
     <link rel="stylesheet" href="{% static 'main/styles.css' %}?v=1.0.0">
     <link rel="stylesheet" href="{% static 'agent/question/styles.css' %}?v=1.0.0">
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.css">
 </head>
 <body>
     <div class="min-h-screen bg-wrapper">
@@ -76,7 +81,9 @@
                     <div class="right-panel glass">
                         <div class="editor-container">
                             <label for="code-editor" class="text-primary font-bold">코드 에디터:</label>
-                            <textarea id="code-editor" class="glass-light" spellcheck="false"></textarea>
+                            <div class="code-editor-wrapper">
+                                <textarea id="code-editor" class="glass-light"></textarea>
+                            </div>
                         </div>
 
                         <button id="submit-btn" class="btn btn-primary glow w-full" disabled>제출하기</button>
@@ -86,6 +93,19 @@
         </div>
     </div>
 
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/ruby/ruby.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/anyword-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/brace-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/indent-fold.min.js"></script>
     <script src="{% static 'main/script.js' %}?v=1.0.0"></script>
     <script src="{% static 'agent/question/script.js' %}?v=1.0.0"></script>
 </body>

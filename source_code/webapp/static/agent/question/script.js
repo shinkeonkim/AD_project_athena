@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const searchInput = document.getElementById("problem-search");
     const autocompleteResults = document.getElementById("autocomplete-results");
     const submitButton = document.getElementById("submit-btn");
-    const codeEditor = document.getElementById("code-editor");
+    const codeEditorTextarea = document.getElementById("code-editor");
     const languageMenuTrigger = document.getElementById("language-menu-trigger");
     const languageMenu = document.getElementById("language-menu");
     const languageOptions = document.querySelectorAll(".language-option");
@@ -14,12 +14,93 @@ document.addEventListener("DOMContentLoaded", () => {
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabPanes = document.querySelectorAll('.tab-pane');
 
+    // 언어별 모드 매핑
+    const languageModes = {
+        cpp: "text/x-c++src",
+        python: "text/x-python",
+        java: "text/x-java",
+        ruby: "text/x-ruby"
+    };
+
+    // 언어 선택에 따른 기본 코드 템플릿
+    const codeTemplates = {
+        cpp: `#include <iostream>
+using namespace std;
+
+int main() {
+    // 여기에 코드를 작성하세요
+
+    return 0;
+}`,
+        python: `# 여기에 코드를 작성하세요
+
+def solution():
+    # 코드 작성
+    pass
+
+if __name__ == "__main__":
+    solution()`,
+        java: `import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        // 여기에 코드를 작성하세요
+
+    }
+}`,
+        ruby: `# 여기에 코드를 작성하세요
+
+def solution
+  # 코드 작성
+end
+
+solution`
+    };
+
+    // CodeMirror 에디터 초기화
+    const codeEditor = CodeMirror.fromTextArea(codeEditorTextarea, {
+        mode: "text/x-python",
+        theme: "dracula",
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        foldGutter: true,
+        gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+        extraKeys: {
+            "Ctrl-Space": "autocomplete",
+            "Ctrl-/": "toggleComment",
+            "Ctrl-F": "findPersistent",
+            "Ctrl-H": "replace",
+            "Ctrl-Q": function(cm) {
+                cm.foldCode(cm.getCursor());
+            }
+        }
+    });
+
     // 상태 변수
     let selectedProblemId = null;
     let currentTaskUuid = null;
     let statusCheckInterval = null;
     let lastSearchValue = "";
-    let currentLanguage = "cpp";
+    let currentLanguage = "python";
+
+    // 초기 언어 설정
+    selectedLanguage.textContent = "Python";
+    languageOptions.forEach(opt => {
+        if (opt.dataset.value === "python") {
+            opt.classList.add("selected");
+        }
+    });
+
+    // 초기 코드 설정
+    setTimeout(() => {
+        codeEditor.setValue(codeTemplates.python);
+        codeEditor.refresh();
+    }, 0);
 
     // 애니메이션 효과 추가
     function addAnimationEffects() {
@@ -126,6 +207,55 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // 난이도 텍스트와 클래스 반환 함수
+    function getDifficultyInfo(level) {
+        const numLevel = parseInt(level);
+        if (isNaN(numLevel)) return { text: 'N/A', class: '' };
+
+        if (numLevel === 0) {
+            return {
+                text: 'Unrated',
+                class: 'level-unrated'
+            };
+        } else if (numLevel <= 5) {
+            // Bronze (B5 ~ B1)
+            return {
+                text: `B${6 - numLevel}`,
+                class: 'level-bronze'
+            };
+        } else if (numLevel <= 10) {
+            // Silver (S5 ~ S1)
+            return {
+                text: `S${11 - numLevel}`,
+                class: 'level-silver'
+            };
+        } else if (numLevel <= 15) {
+            // Gold (G5 ~ G1)
+            return {
+                text: `G${16 - numLevel}`,
+                class: 'level-gold'
+            };
+        } else if (numLevel <= 20) {
+            // Platinum (P5 ~ P1)
+            return {
+                text: `P${21 - numLevel}`,
+                class: 'level-platinum'
+            };
+        } else if (numLevel <= 25) {
+            // Diamond (D5 ~ D1)
+            return {
+                text: `D${26 - numLevel}`,
+                class: 'level-diamond'
+            };
+        } else {
+            // Ruby (R5 ~ R1)
+            return {
+                text: `R${31 - numLevel}`,
+                class: 'level-ruby'
+            };
+        }
+    }
+
     // 자동완성 결과 표시
     const updateAutocomplete = debounce(async function() {
         const inputValue = searchInput.value.toLowerCase();
@@ -154,19 +284,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 const item = document.createElement("div");
                 item.className = "autocomplete-item glass-light";
 
-                // 난이도에 따른 색상 클래스 추가
-                let levelClass = '';
-                if (problem.level) {
-                    const level = parseInt(problem.level);
-                    if (level <= 5) levelClass = 'level-easy';
-                    else if (level <= 10) levelClass = 'level-medium';
-                    else levelClass = 'level-hard';
-                }
+                // 난이도 정보 가져오기
+                const difficultyInfo = getDifficultyInfo(problem.level);
 
                 item.innerHTML = `
                     <span class="problem-id">${problem.boj_id}</span>
                     <span class="problem-title">${problem.title}</span>
-                    <span class="problem-level ${levelClass}">${problem.level || 'N/A'}</span>
+                    <span class="problem-level ${difficultyInfo.class}">${difficultyInfo.text}</span>
                 `;
                 item.dataset.id = problem.id;
 
@@ -238,19 +362,13 @@ document.addEventListener("DOMContentLoaded", () => {
                     const item = document.createElement("div");
                     item.className = "autocomplete-item glass-light";
 
-                    // 난이도에 따른 색상 클래스 추가
-                    let levelClass = '';
-                    if (problem.level) {
-                        const level = parseInt(problem.level);
-                        if (level <= 5) levelClass = 'level-easy';
-                        else if (level <= 10) levelClass = 'level-medium';
-                        else levelClass = 'level-hard';
-                    }
+                    // 난이도 정보 가져오기
+                    const difficultyInfo = getDifficultyInfo(problem.level);
 
                     item.innerHTML = `
                         <span class="problem-id">${problem.boj_id}</span>
                         <span class="problem-title">${problem.title}</span>
-                        <span class="problem-level ${levelClass}">${problem.level || 'N/A'}</span>
+                        <span class="problem-level ${difficultyInfo.class}">${difficultyInfo.text}</span>
                     `;
                     item.dataset.id = problem.id;
 
@@ -360,14 +478,8 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
         }
 
-        // 난이도에 따른 색상 클래스 추가
-        let levelClass = '';
-        if (problem.level) {
-            const level = parseInt(problem.level);
-            if (level <= 5) levelClass = 'level-easy';
-            else if (level <= 10) levelClass = 'level-medium';
-            else levelClass = 'level-hard';
-        }
+        // 난이도 정보 가져오기
+        const difficultyInfo = getDifficultyInfo(problem.level);
 
         // 문제 정보 HTML 생성
         problemContent.innerHTML = `
@@ -376,7 +488,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span class="problem-id">[${problem.boj_id}]</span>
                     ${problem.title}
                 </h3>
-                <span class="problem-level ${levelClass}">${problem.level || 'N/A'}</span>
+                <span class="problem-level ${difficultyInfo.class}">${difficultyInfo.text}</span>
             </div>
 
             <div class="problem-description">
@@ -404,44 +516,6 @@ document.addEventListener("DOMContentLoaded", () => {
         animateOnScroll();
     }
 
-    // 언어 선택에 따른 기본 코드 템플릿
-    const codeTemplates = {
-        cpp: `#include <iostream>
-using namespace std;
-
-int main() {
-    // 여기에 코드를 작성하세요
-
-    return 0;
-}`,
-        python: `# 여기에 코드를 작성하세요
-
-def solution():
-    # 코드 작성
-    pass
-
-if __name__ == "__main__":
-    solution()`,
-        java: `import java.util.Scanner;
-
-public class Main {
-    public static void main(String[] args) {
-        // 여기에 코드를 작성하세요
-
-    }
-}`,
-        ruby: `# 여기에 코드를 작성하세요
-
-def solution
-  # 코드 작성
-end
-
-solution`,
-    }
-
-    // 초기 코드 템플릿 설정
-    codeEditor.value = codeTemplates.cpp;
-
     // 언어 메뉴 토글
     languageMenuTrigger.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -451,7 +525,8 @@ solution`,
 
     // 언어 옵션 선택
     languageOptions.forEach(option => {
-        option.addEventListener("click", () => {
+        option.addEventListener("click", (e) => {
+            e.stopPropagation();
             const value = option.dataset.value;
             const text = option.textContent;
 
@@ -467,8 +542,12 @@ solution`,
             languageMenuTrigger.classList.remove("active");
             languageMenu.classList.remove("show");
 
+            // 에디터 모드 변경
+            codeEditor.setOption("mode", languageModes[value]);
+
             // 코드 템플릿 업데이트
-            codeEditor.value = codeTemplates[value];
+            codeEditor.setValue(codeTemplates[value]);
+            codeEditor.refresh();
         });
     });
 
@@ -487,7 +566,7 @@ solution`,
             return;
         }
 
-        const code = codeEditor.value;
+        const code = codeEditor.getValue();
         const language = currentLanguage;
 
         // 버튼 상태 변경

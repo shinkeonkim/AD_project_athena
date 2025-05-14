@@ -160,18 +160,36 @@ label {
   padding: 2px 8px;
   border-radius: 12px;
   background: rgba(22, 33, 49, 0.5);
+  font-weight: bold;
 }
 
-.level-easy {
-  color: #4caf50;
+/* 난이도별 색상 */
+.level-unrated {
+  color: var(--gray-300);
 }
 
-.level-medium {
-  color: #ff9800;
+.level-bronze {
+  color: rgb(173, 86, 0);
 }
 
-.level-hard {
-  color: #f44336;
+.level-silver {
+  color: rgb(56, 84, 110);
+}
+
+.level-gold {
+  color: rgb(210, 133, 0);
+}
+
+.level-platinum {
+  color: rgb(0, 199, 139);
+}
+
+.level-diamond {
+  color: rgb(0, 158, 229);
+}
+
+.level-ruby {
+  color: rgb(224, 0, 76);
 }
 
 /* 언어 선택 스타일 */
@@ -270,26 +288,88 @@ label {
   height: 100%;
 }
 
-#code-editor {
-  width: 100%;
+.code-editor-wrapper {
   flex: 1;
-  padding: 15px;
-  border: 1px solid rgba(12, 234, 217, 0.3);
   border-radius: 8px;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 16px;
-  line-height: 1.5;
-  resize: none;
-  color: var(--text);
-  background-color: transparent;
-  transition: all 0.3s;
+  overflow: hidden;
   margin-bottom: 15px;
 }
 
-#code-editor:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 10px rgba(12, 234, 217, 0.3);
+.CodeMirror {
+  height: 100% !important;
+  font-family: 'Fira Code', 'Courier New', monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  background-color: transparent !important;
+}
+
+.CodeMirror-gutters {
+  border-right: 1px solid rgba(12, 234, 217, 0.2);
+  background-color: rgba(22, 33, 49, 0.5) !important;
+}
+
+.CodeMirror-linenumber {
+  color: var(--gray-300);
+}
+
+.CodeMirror-cursor {
+  border-left: 2px solid var(--primary) !important;
+}
+
+.CodeMirror-selected {
+  background-color: rgba(12, 234, 217, 0.1) !important;
+}
+
+.CodeMirror-focused .CodeMirror-selected {
+  background-color: rgba(12, 234, 217, 0.2) !important;
+}
+
+.CodeMirror-matchingbracket {
+  color: var(--primary) !important;
+  font-weight: bold;
+}
+
+.CodeMirror-nonmatchingbracket {
+  color: #f44336 !important;
+}
+
+.CodeMirror-hints {
+  background-color: rgba(22, 33, 49, 0.95) !important;
+  border: 1px solid rgba(12, 234, 217, 0.3) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.CodeMirror-hint {
+  color: var(--gray-300) !important;
+  padding: 8px 12px !important;
+}
+
+.CodeMirror-hint-active {
+  background-color: rgba(12, 234, 217, 0.2) !important;
+  color: var(--primary) !important;
+}
+
+/* CodeMirror 테마 커스터마이징 */
+.cm-s-dracula .CodeMirror-gutters {
+  background: rgba(22, 33, 49, 0.5) !important;
+  border-right: 1px solid rgba(12, 234, 217, 0.2) !important;
+}
+
+.cm-s-dracula .CodeMirror-linenumber {
+  color: var(--gray-300) !important;
+}
+
+.cm-s-dracula .CodeMirror-cursor {
+  border-left: 2px solid var(--primary) !important;
+}
+
+.cm-s-dracula .CodeMirror-selected {
+  background-color: rgba(12, 234, 217, 0.1) !important;
+}
+
+.cm-s-dracula .CodeMirror-focused .CodeMirror-selected {
+  background-color: rgba(12, 234, 217, 0.2) !important;
 }
 
 .problem-info {
