@@ -4,16 +4,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const autocompleteResults = document.getElementById("autocomplete-results");
     const submitButton = document.getElementById("submit-btn");
     const codeEditor = document.getElementById("code-editor");
-    const languageSelect = document.getElementById("language-select");
+    const languageMenuTrigger = document.getElementById("language-menu-trigger");
+    const languageMenu = document.getElementById("language-menu");
+    const languageOptions = document.querySelectorAll(".language-option");
+    const selectedLanguage = document.querySelector(".selected-language");
     const feedbackContent = document.getElementById("feedback-content");
     const problemInfo = document.querySelector('.problem-info');
     const feedbackArea = document.querySelector('.feedback-area');
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabPanes = document.querySelectorAll('.tab-pane');
 
     // 상태 변수
     let selectedProblemId = null;
     let currentTaskUuid = null;
     let statusCheckInterval = null;
     let lastSearchValue = "";
+    let currentLanguage = "cpp";
 
     // 애니메이션 효과 추가
     function addAnimationEffects() {
@@ -86,8 +92,14 @@ document.addEventListener("DOMContentLoaded", () => {
     // API에서 문제 상세 정보 가져오기
     async function getProblemDetails(problemId) {
         try {
+            const problemContent = document.querySelector('#problem-tab .problem-content');
+            if (!problemContent) {
+                console.error('Problem content element not found');
+                return null;
+            }
+
             // 로딩 효과 추가
-            problemInfo.innerHTML = `
+            problemContent.innerHTML = `
                 <div class="loading-container">
                     <div class="loading-spinner"></div>
                     <p class="text-gray-300">문제 정보를 불러오는 중...</p>
@@ -102,11 +114,14 @@ document.addEventListener("DOMContentLoaded", () => {
             return await response.json();
         } catch (error) {
             console.error('Error fetching problem details:', error);
-            problemInfo.innerHTML = `
-                <div class="error-container">
-                    <p class="text-red-500">문제 정보를 불러오는 중 오류가 발생했습니다.</p>
-                </div>
-            `;
+            const problemContent = document.querySelector('#problem-tab .problem-content');
+            if (problemContent) {
+                problemContent.innerHTML = `
+                    <div class="error-container">
+                        <p class="text-red-500">문제 정보를 불러오는 중 오류가 발생했습니다.</p>
+                    </div>
+                `;
+            }
             return null;
         }
     }
@@ -277,6 +292,32 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // 탭 전환 함수
+    function switchTab(tabName) {
+        tabButtons.forEach(button => {
+            if (button.dataset.tab === tabName) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+
+        tabPanes.forEach(pane => {
+            if (pane.id === `${tabName}-tab`) {
+                pane.classList.add('active');
+            } else {
+                pane.classList.remove('active');
+            }
+        });
+    }
+
+    // 탭 버튼 이벤트 리스너
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            switchTab(button.dataset.tab);
+        });
+    });
+
     // 문제 상세 정보 로드
     async function loadProblemDetails(problemId) {
         const problem = await getProblemDetails(problemId);
@@ -286,7 +327,7 @@ document.addEventListener("DOMContentLoaded", () => {
         submitButton.disabled = false;
         submitButton.classList.add('glow');
 
-        const problemInfoElement = document.getElementById("problem-info");
+        const problemContent = document.querySelector('#problem-tab .problem-content');
 
         // 테스트 케이스 HTML 생성
         let testCasesHTML = "";
@@ -329,36 +370,33 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // 문제 정보 HTML 생성
-        problemInfoElement.innerHTML = `
-            <h2 class="section-title text-primary font-bold">문제 정보</h2>
-            <div class="problem-content">
-                <div class="problem-header">
-                    <h3 class="problem-title text-white">
-                        <span class="problem-id">[${problem.boj_id}]</span>
-                        ${problem.title}
-                    </h3>
-                    <span class="problem-level ${levelClass}">${problem.level || 'N/A'}</span>
-                </div>
+        problemContent.innerHTML = `
+            <div class="problem-header">
+                <h3 class="problem-title text-white">
+                    <span class="problem-id">[${problem.boj_id}]</span>
+                    ${problem.title}
+                </h3>
+                <span class="problem-level ${levelClass}">${problem.level || 'N/A'}</span>
+            </div>
 
-                <div class="problem-description">
-                    <p class="text-gray-300">${problem.description}</p>
-                </div>
+            <div class="problem-description">
+                <p class="text-gray-300">${problem.description}</p>
+            </div>
 
-                <div class="problem-section">
-                    <h4 class="section-subtitle text-primary">입력</h4>
-                    <p class="text-gray-300">${problem.input_description}</p>
-                </div>
+            <div class="problem-section">
+                <h4 class="section-subtitle text-primary">입력</h4>
+                <p class="text-gray-300">${problem.input_description}</p>
+            </div>
 
-                <div class="problem-section">
-                    <h4 class="section-subtitle text-primary">출력</h4>
-                    <p class="text-gray-300">${problem.output_description}</p>
-                </div>
+            <div class="problem-section">
+                <h4 class="section-subtitle text-primary">출력</h4>
+                <p class="text-gray-300">${problem.output_description}</p>
+            </div>
 
-                ${extraInfoHTML}
+            ${extraInfoHTML}
 
-                <div class="test-cases-container">
-                    ${testCasesHTML}
-                </div>
+            <div class="test-cases-container">
+                ${testCasesHTML}
             </div>
         `;
 
@@ -404,24 +442,42 @@ solution`,
     // 초기 코드 템플릿 설정
     codeEditor.value = codeTemplates.cpp;
 
-    // 언어 변경 시 코드 템플릿 업데이트
-    languageSelect.addEventListener("change", function () {
-        // 변경 효과
-        this.classList.add('changed');
-        setTimeout(() => {
-            this.classList.remove('changed');
-        }, 300);
-
-        codeEditor.value = codeTemplates[this.value];
+    // 언어 메뉴 토글
+    languageMenuTrigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        languageMenuTrigger.classList.toggle("active");
+        languageMenu.classList.toggle("show");
     });
 
-    // 코드 에디터 포커스 효과
-    codeEditor.addEventListener('focus', function() {
-        this.parentElement.classList.add('focused');
+    // 언어 옵션 선택
+    languageOptions.forEach(option => {
+        option.addEventListener("click", () => {
+            const value = option.dataset.value;
+            const text = option.textContent;
+
+            // 선택된 언어 업데이트
+            currentLanguage = value;
+            selectedLanguage.textContent = text;
+
+            // 선택된 옵션 표시 업데이트
+            languageOptions.forEach(opt => opt.classList.remove("selected"));
+            option.classList.add("selected");
+
+            // 메뉴 닫기
+            languageMenuTrigger.classList.remove("active");
+            languageMenu.classList.remove("show");
+
+            // 코드 템플릿 업데이트
+            codeEditor.value = codeTemplates[value];
+        });
     });
 
-    codeEditor.addEventListener('blur', function() {
-        this.parentElement.classList.remove('focused');
+    // 문서 클릭 시 메뉴 닫기
+    document.addEventListener("click", (e) => {
+        if (!languageMenuTrigger.contains(e.target) && !languageMenu.contains(e.target)) {
+            languageMenuTrigger.classList.remove("active");
+            languageMenu.classList.remove("show");
+        }
     });
 
     // 코드 제출 처리
@@ -432,7 +488,7 @@ solution`,
         }
 
         const code = codeEditor.value;
-        const language = languageSelect.value;
+        const language = currentLanguage;
 
         // 버튼 상태 변경
         this.disabled = true;
@@ -525,6 +581,9 @@ solution`,
         if (statusCheckInterval) {
             clearInterval(statusCheckInterval);
         }
+
+        // 피드백 탭으로 전환
+        switchTab('feedback');
 
         feedbackContent.innerHTML = `
             <div class="loading-container">

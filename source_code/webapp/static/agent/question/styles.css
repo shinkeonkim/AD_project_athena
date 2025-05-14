@@ -175,29 +175,92 @@ label {
 }
 
 /* 언어 선택 스타일 */
-.language-dropdown {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid rgba(12, 234, 217, 0.3);
-  border-radius: 8px;
-  font-size: 16px;
-  color: var(--text);
-  background-color: transparent;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230cead9' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 1em;
-  transition: all 0.3s;
+.language-menu-wrapper {
+    position: relative;
+    z-index: 100;
 }
 
-.language-dropdown:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 10px rgba(12, 234, 217, 0.3);
+.language-menu-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid rgba(12, 234, 217, 0.3);
+    border-radius: 8px;
+    font-size: 16px;
+    color: var(--text);
+    background-color: transparent;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.language-menu-trigger:hover {
+    border-color: var(--primary);
+    background: rgba(12, 234, 217, 0.1);
+}
+
+.language-menu-trigger:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(12, 234, 217, 0.3);
+}
+
+.language-menu-arrow {
+    font-size: 12px;
+    color: var(--primary);
+    transition: transform 0.3s;
+}
+
+.language-menu-trigger.active .language-menu-arrow {
+    transform: rotate(180deg);
+}
+
+.language-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    margin-top: 5px;
+    border: 1px solid rgba(12, 234, 217, 0.3);
+    border-radius: 8px;
+    background-color: rgba(22, 33, 49, 0.95);
+    display: none;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.language-menu.show {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+.language-option {
+    padding: 12px;
+    cursor: pointer;
+    color: var(--gray-300);
+    transition: all 0.2s;
+}
+
+.language-option:hover {
+    background-color: rgba(12, 234, 217, 0.1);
+    color: var(--primary);
+}
+
+.language-option.selected {
+    background-color: rgba(12, 234, 217, 0.2);
+    color: var(--primary);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 코드 에디터 스타일 */
@@ -232,7 +295,7 @@ label {
 .problem-info {
   flex: 1;
   padding: 15px;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: 12px;
   display: flex;
   z-index: 0;
@@ -442,6 +505,66 @@ label {
   margin-right: 5px;
 }
 
+/* 탭 컨테이너 스타일 */
+.tab-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tab-header {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid rgba(12, 234, 217, 0.2);
+  padding-bottom: 10px;
+}
+
+.tab-button {
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--gray-300);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: all 0.3s;
+  border-radius: 6px;
+}
+
+.tab-button:hover {
+  color: var(--primary);
+  background: rgba(12, 234, 217, 0.1);
+}
+
+.tab-button.active {
+  color: var(--primary);
+  background: rgba(12, 234, 217, 0.2);
+}
+
+.tab-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.tab-pane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+  overflow-y: auto;
+}
+
+.tab-pane.active {
+  opacity: 1;
+  visibility: visible;
+}
+
 /* 반응형 디자인 */
 @media (max-width: 1024px) {
   .coding-container {
@@ -464,9 +587,8 @@ label {
     height: auto;
   }
 
-  .problem-info,
-  .feedback-area {
-    height: 300px;
+  .problem-info {
+    height: 400px;
   }
 
   #code-editor {
@@ -483,15 +605,13 @@ label {
     padding: 0 10px 10px;
   }
 
-  .problem-info,
-  .feedback-area {
-    height: 250px;
+  .problem-info {
+    height: 350px;
   }
 }
 
 @media (max-height: 800px) {
-  .problem-info,
-  .feedback-area {
-    height: 200px;
+  .problem-info {
+    height: 300px;
   }
 }

@@ -34,27 +34,40 @@
 
                             <div class="language-selector">
                                 <label for="language-select" class="text-primary font-bold">프로그래밍 언어:</label>
-                                <select id="language-select" class="language-dropdown glass-light">
-                                    <option value="cpp">C++</option>
-                                    <option value="python">Python</option>
-                                    <option value="java">Java</option>
-                                    <option value="ruby">Ruby</option>
-                                </select>
+                                <div class="language-menu-wrapper">
+                                    <div class="language-menu-trigger glass-light" id="language-menu-trigger">
+                                        <span class="selected-language">C++</span>
+                                        <span class="language-menu-arrow">▼</span>
+                                    </div>
+                                    <div class="language-menu glass-dark" id="language-menu">
+                                        <div class="language-option" data-value="cpp">C++</div>
+                                        <div class="language-option" data-value="python">Python</div>
+                                        <div class="language-option" data-value="java">Java</div>
+                                        <div class="language-option" data-value="ruby">Ruby</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div class="problem-info glass" id="problem-info">
-                            <h2 class="text-primary font-bold">문제 정보</h2>
-                            <div class="problem-content">
-                                <h3 class="text-white">문제를 검색하여 선택해주세요</h3>
-                                <p class="text-gray-300">위 검색창에서 문제를 검색하고 선택하면 문제 정보가 여기에 표시됩니다.</p>
-                            </div>
-                        </div>
-
-                        <div class="feedback-area glass">
-                            <h2 class="text-primary font-bold">피드백</h2>
-                            <div id="feedback-content" class="markdown-content text-gray-300">
-                                <p>코드를 제출하면 피드백이 여기에 표시됩니다.</p>
+                            <div class="tab-container">
+                                <div class="tab-header">
+                                    <button class="tab-button active" data-tab="problem">문제 정보</button>
+                                    <button class="tab-button" data-tab="feedback">피드백</button>
+                                </div>
+                                <div class="tab-content">
+                                    <div class="tab-pane active" id="problem-tab">
+                                        <div class="problem-content">
+                                            <h3 class="text-white">문제를 검색하여 선택해주세요</h3>
+                                            <p class="text-gray-300">위 검색창에서 문제를 검색하고 선택하면 문제 정보가 여기에 표시됩니다.</p>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane" id="feedback-tab">
+                                        <div id="feedback-content" class="markdown-content text-gray-300">
+                                            <p>코드를 제출하면 피드백이 여기에 표시됩니다.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
