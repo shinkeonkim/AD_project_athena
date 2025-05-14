@@ -13,6 +13,9 @@ class QuestionTaskStatus(models.TextChoices):
 
 class QuestionTask(BaseModel):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    user = models.ForeignKey(
+        "user.User", on_delete=models.SET_NULL, null=True, blank=True
+    )
     problem = models.ForeignKey("problem.Problem", on_delete=models.CASCADE)
     code = models.TextField()
     language = models.CharField(max_length=10)
