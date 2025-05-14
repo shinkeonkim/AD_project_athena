@@ -36,6 +36,12 @@ class ProblemInfoCollectService:
         html_str = str(element)
         tree = html.fromstring(html_str)
 
+        # Process image URLs
+        for img in tree.xpath("//img"):
+            src = img.get("src", "")
+            if src.startswith("/"):
+                img.set("src", f"https://www.acmicpc.net{src}")
+
         # Process superscript and subscript elements
         for sup in tree.xpath("//sup"):
             # Create a new element with the same content
