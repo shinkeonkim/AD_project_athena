@@ -23,10 +23,11 @@ from django.views.static import serve
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("agents/", include("agent.urls")),
+    path("", include("main.urls")),
     path("api/", include("api.urls")),
 ]
 
 urlpatterns += [
     # re_path(r"^media/(?P<path>.*)$", serve, {"document_root": settings.MEDIA_ROOT}),
-    re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_ROOT}),
+    re_path(r"^static/(?P<path>.*)$", serve, {"document_root": settings.STATIC_DIR}),
 ]
