@@ -13,70 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 로그인 상태 토글 (데모용)
-    let isLoggedIn = false;
-    const authButtons = document.getElementById('auth-buttons');
-    const userMenu = document.getElementById('user-menu');
-    const mobileAuthButtons = document.getElementById('mobile-auth-buttons');
-    const mobileUserMenu = document.getElementById('mobile-user-menu');
-    const loginBtn = document.getElementById('login-btn');
-    const mobileLoginBtn = document.getElementById('mobile-login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const mobileLogoutBtn = document.getElementById('mobile-logout-btn');
-    const userBtn = document.getElementById('user-btn');
-    const dropdownMenu = document.getElementById('dropdown-menu');
-
-    // 로그인 버튼 이벤트
-    if (loginBtn) {
-        loginBtn.addEventListener('click', toggleLogin);
-    }
-    if (mobileLoginBtn) {
-        mobileLoginBtn.addEventListener('click', function() {
-            toggleLogin();
-            mobileMenu.classList.add('hidden');
-            menuIcon.classList.remove('hidden');
-            closeIcon.classList.add('hidden');
-        });
-    }
-
-    // 로그아웃 버튼 이벤트
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', toggleLogin);
-    }
-    if (mobileLogoutBtn) {
-        mobileLogoutBtn.addEventListener('click', function() {
-            toggleLogin();
-            mobileMenu.classList.add('hidden');
-            menuIcon.classList.remove('hidden');
-            closeIcon.classList.add('hidden');
-        });
-    }
-
-    // 사용자 메뉴 토글
-    if (userBtn) {
-        userBtn.addEventListener('click', function() {
-            dropdownMenu.classList.toggle('hidden');
-        });
-    }
-
-    // 로그인 상태 토글 함수
-    function toggleLogin() {
-        isLoggedIn = !isLoggedIn;
-
-        if (isLoggedIn) {
-            if (authButtons) authButtons.classList.add('hidden');
-            if (userMenu) userMenu.classList.remove('hidden');
-            if (mobileAuthButtons) mobileAuthButtons.classList.add('hidden');
-            if (mobileUserMenu) mobileUserMenu.classList.remove('hidden');
-        } else {
-            if (authButtons) authButtons.classList.remove('hidden');
-            if (userMenu) userMenu.classList.add('hidden');
-            if (mobileAuthButtons) mobileAuthButtons.classList.remove('hidden');
-            if (mobileUserMenu) mobileUserMenu.classList.add('hidden');
-            if (dropdownMenu) dropdownMenu.classList.add('hidden');
-        }
-    }
-
     // FAQ 토글 기능
     function toggleFaq(button) {
         const faqItem = button.closest('.faq-item');
@@ -96,13 +32,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 전역 함수로 등록
     window.toggleFaq = toggleFaq;
-
-    // 문서 클릭 시 드롭다운 메뉴 닫기
-    document.addEventListener('click', function(event) {
-        if (userBtn && dropdownMenu && !userBtn.contains(event.target) && !dropdownMenu.contains(event.target)) {
-            dropdownMenu.classList.add('hidden');
-        }
-    });
 
     // 스크롤 애니메이션
     const animateOnScroll = function() {
