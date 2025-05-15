@@ -702,7 +702,7 @@ solution`
                 case 'COMPLETED':
                     feedbackContent.innerHTML = `
                         <div class="feedback-result">
-                            <div class="feedback-text text-gray-300">${data.feedback}</div>
+                            <div class="feedback-text markdown-content text-gray-300">${marked.parse(data.feedback)}</div>
                         </div>
                     `;
                     clearInterval(statusCheckInterval);

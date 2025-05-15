@@ -40,7 +40,21 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.view-full-code').forEach(button => {
         button.addEventListener('click', function() {
             const code = this.dataset.code;
-            modalContent.textContent = code;
+            // 언어 정보 추출 (상위 .task-item에서 찾기)
+            const taskItem = this.closest('.task-item');
+            let language = 'plaintext';
+            if (taskItem) {
+                const langElem = taskItem.querySelector('.detail-section p.text-gray-300');
+                if (langElem) {
+                    language = langElem.textContent.trim().toLowerCase();
+                    if (language === 'c++') language = 'cpp';
+                }
+            }
+            // 코드 하이라이팅
+            modalContent.innerHTML = `<pre><code class="language-${language}"></code></pre>`;
+            const codeElem = modalContent.querySelector('code');
+            codeElem.textContent = code;
+            if (window.hljs) hljs.highlightElement(codeElem);
             modal.style.display = 'block';
         });
     });
@@ -49,7 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.view-full-feedback').forEach(button => {
         button.addEventListener('click', function() {
             const feedback = this.dataset.feedback;
-            modalContent.textContent = feedback;
+            // 마크다운 -> HTML 변환
+            modalContent.innerHTML = `<div class="markdown-content">${marked.parse(feedback)}</div>`;
             modal.style.display = 'block';
         });
     });

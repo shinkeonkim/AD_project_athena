@@ -21,3 +21,7 @@ class Article(BaseModel):
     problem = models.ForeignKey(
         Problem, on_delete=models.CASCADE, related_name="articles"
     )
+
+    code = models.TextField(null=True, blank=True)
+    enhanced_explanation = models.TextField(null=True, blank=True)
+    source = models.CharField(max_length=64, null=True, blank=True)

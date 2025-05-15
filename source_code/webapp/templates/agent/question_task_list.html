@@ -4,6 +4,15 @@
 {% block head %}
 <link rel="stylesheet" href="{% static 'main/styles.css' %}?v=1.0.0">
 <link rel="stylesheet" href="{% static 'agent/question_task_list/styles.css' %}?v=1.0.0">
+<!-- highlight.js for code highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<!-- marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/ruby.min.js"></script>
 {% endblock head %}
 
 {% block header %}
@@ -13,7 +22,7 @@
 {% block content %}
 <div class="main-container">
     <div class="task-list-container glass">
-        <h2 class="text-primary font-bold mb-4">나의 문제 풀이 기록</h2>
+        <h2 class="text-primary font-bold mb-4">질문 기록</h2>
 
         {% if page_obj %}
             <div class="task-list">
