@@ -14,8 +14,11 @@ class Problem(BaseModel):
             models.Index(fields=["boj_id"]),
             models.Index(fields=["title"]),
             models.Index(fields=["level"]),
-            GinIndex(fields=["title"]),
-            GinIndex(fields=["boj_id"]),
+            GinIndex(
+                fields=["title"],
+                name="problems_title_gin_trgm",
+                opclasses=["gin_trgm_ops"],
+            ),
         ]
 
     boj_id = models.IntegerField(unique=True, null=False, blank=False)
