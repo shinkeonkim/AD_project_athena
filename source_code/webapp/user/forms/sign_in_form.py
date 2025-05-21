@@ -2,7 +2,7 @@ from django import forms
 from user.models import User
 
 
-class LoginForm(forms.Form):
+class SignInForm(forms.Form):
     email = forms.EmailField(
         widget=forms.EmailInput(
             attrs={

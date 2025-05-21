@@ -2,7 +2,7 @@ from django import forms
 from user.models import User
 
 
-class RegisterForm(forms.Form):
+class SignUpForm(forms.Form):
     username = forms.CharField(
         widget=forms.TextInput(
             attrs={
