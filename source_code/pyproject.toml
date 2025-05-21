@@ -42,7 +42,8 @@ django-import-export = "^4.3.7"
 django-guardian = "^3.0.0"
 django-simple-history = "^3.8.0"
 lxml = "^5.2.0"
-duckduckgo-search = "^8.0.1"
+duckduckgo-search = "^8.0.2"
+pydantic = "^2.11.4"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^4.0.1"

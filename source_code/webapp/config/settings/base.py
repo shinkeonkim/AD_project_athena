@@ -70,6 +70,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -171,3 +172,24 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 
 GEMINI_API_KEY = env("GEMINI_API_KEY")
+
+
+# TODO: logger 설정
+# TODO: 테스트 환경 설정
+# TODO: unfold 어드민 관련 설정
+
+UNFOLD = {
+    "SITE_TITLE": "Athena",
+    "SITE_DESCRIPTION": "Athena",
+    "SITE_KEYWORDS": "Athena, BOJ, Algorithm, Problem, Solving",
+    "SITE_AUTHOR": "shinkeonkim",
+    "SITE_COPYRIGHT": "shinkeonkim",
+    "SITE_URL": "/",
+}
+
+
+OLLAMA_HOST = env("OLLAMA_HOST", default="ollama")
+OLLAMA_PORT = env("OLLAMA_PORT", default="11434")
+OLLAMA_MODEL = env("OLLAMA_MODEL", default="llama2")
+
+DRF_API_LOGGER_DATABASE = True

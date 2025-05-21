@@ -73,6 +73,8 @@ services:
     container_name: athena-redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -125,18 +127,19 @@ services:
       - celery-worker
     command: celery -A config flower --port=5555
 
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   container_name: athena-ollama
-  #   restart: always
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #     - ./environments/dev/init-ollama.sh:/init-ollama.sh
-  #   entrypoint: ["/init-ollama.sh"]
+  ollama:
+    image: ollama/ollama:latest
+    container_name: athena-ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./environments/dev/init-ollama.sh:/init-ollama.sh
+    entrypoint: ["/init-ollama.sh"]
 
 volumes:
   postgres_data:
   postgres_test_data:
-  # ollama_data:
+  redis_data:
+  ollama_data:
