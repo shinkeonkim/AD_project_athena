@@ -11,17 +11,26 @@ class Article(BaseModel):
     class Meta:
         db_table = "articles"
 
+    # Basic article information
     title = models.TextField()
-    content = models.TextField()
+    author = models.TextField(null=True, blank=True)
+    source = models.CharField(max_length=64, null=True, blank=True)
 
+    # URLs
     full_url = models.URLField(null=True, blank=True)
     site_url = models.URLField(null=True, blank=True)
 
-    author = models.TextField()
+    # Problem relationship
     problem = models.ForeignKey(
         Problem, on_delete=models.CASCADE, related_name="articles"
     )
 
-    code = models.TextField(null=True, blank=True)
-    enhanced_explanation = models.TextField(null=True, blank=True)
-    source = models.CharField(max_length=64, null=True, blank=True)
+    # Structured content
+    summary = models.TextField(null=True, blank=True)
+    approach = models.TextField(null=True, blank=True)
+    complexity_analysis = models.TextField(null=True, blank=True)
+    additional_tips = models.TextField(null=True, blank=True)
+    code_blocks = models.JSONField(null=True, blank=True)
+
+    # Metadata
+    relevance_confidence = models.FloatField(null=True, blank=True)

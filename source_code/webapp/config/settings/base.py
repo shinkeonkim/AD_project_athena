@@ -70,6 +70,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "drf_api_logger.middleware.api_logger_middleware.APILoggerMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -169,5 +170,8 @@ CELERY_TIMEZONE = TIME_ZONE
 # Celery Beat 설정
 CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
-
+HUGGINGFACE_TOKEN = env("HUGGINGFACE_TOKEN")
+OPENAI_API_KEY = env("OPENAI_API_KEY")
 GEMINI_API_KEY = env("GEMINI_API_KEY")
+
+DRF_API_LOGGER_DATABASE = True
