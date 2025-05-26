@@ -8,12 +8,23 @@ from user.models.user import User
 
 
 class Ticket(BaseModel):
+    class PlanType(models.TextChoices):
+        BASIC = "basic", _("Basic")
+        PLUS = "plus", _("Plus")
+        PRO = "pro", _("Pro")
+
     class Meta:
         db_table = "tickets"
         verbose_name = _("ticket")
         verbose_name_plural = _("tickets")
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="ticket")
+    plan_type = models.CharField(
+        max_length=10,
+        choices=PlanType.choices,
+        default=PlanType.BASIC,
+        verbose_name=_("Plan Type"),
+    )
     max_usage_per_day = models.PositiveIntegerField(default=50)
     max_usage_per_month = models.PositiveIntegerField(default=5000)
     max_usage_per_year = models.PositiveIntegerField(default=50000)
@@ -28,6 +39,16 @@ class Ticket(BaseModel):
 
     def __str__(self):
         return f"{self.user.username} - {self.id}"
+
+    def save(self, *args, **kwargs):
+        # Update max_usage_per_day based on plan type
+        if self.plan_type == self.PlanType.BASIC:
+            self.max_usage_per_day = 50
+        elif self.plan_type == self.PlanType.PLUS:
+            self.max_usage_per_day = 100
+        elif self.plan_type == self.PlanType.PRO:
+            self.max_usage_per_day = 200
+        super().save(*args, **kwargs)
 
     def is_last_used_one_day_ago(self):
         """한국 기준 00:00:00 기준으로 하루 전인지 확인"""
