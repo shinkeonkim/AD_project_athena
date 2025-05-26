@@ -6,7 +6,12 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+    # 테스트 명령어인 경우 테스트 설정을 사용
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.test")
+    else:
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
+
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:

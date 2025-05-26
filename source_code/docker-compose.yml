@@ -40,14 +40,14 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_PORT=${POSTGRES_PORT}
     volumes:
-      - ./environments/dev/init-pg-extensions.sh:/init-pg-extensions.sh
+      - ./environments/dev/init-pg-extensions.sh:/docker-entrypoint-initdb.d/init-pg-extensions.sh
       - postgres_data:/var/lib/postgresql/data/
     command: -p ${POSTGRES_PORT}
 
   athena_test_db:
     build:
       context: .
-      dockerfile: ./environments/dev/postgres.Dockerfile
+      dockerfile: ./environments/test/postgres.Dockerfile
     container_name: db_test
     expose:
       - "${TEST_POSTGRES_PORT}"
@@ -63,10 +63,9 @@ services:
       - POSTGRES_INITDB_ARGS=--encoding=UTF-8
       - POSTGRES_PORT=${TEST_POSTGRES_PORT}
     volumes:
-      - ./environments/dev/init-pg-extensions.sh:/init-pg-extensions.sh
+      - ./environments/test/init-pg-extensions.sh:/docker-entrypoint-initdb.d/init-pg-extensions.sh
       - postgres_test_data:/var/lib/postgresql/data/
     command: -p ${TEST_POSTGRES_PORT}
-
 
   redis:
     image: redis:7
