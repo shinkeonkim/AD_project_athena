@@ -21,7 +21,7 @@ class SignUpForm(forms.Form):
         ),
         label="이메일",
     )
-    password = forms.CharField(
+    password1 = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
                 "class": "form-input",
@@ -30,7 +30,7 @@ class SignUpForm(forms.Form):
         ),
         label="비밀번호",
     )
-    password_confirm = forms.CharField(
+    password2 = forms.CharField(
         widget=forms.PasswordInput(
             attrs={
                 "class": "form-input",
@@ -42,23 +42,21 @@ class SignUpForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password_confirm = cleaned_data.get("password_confirm")
+        username = cleaned_data.get("username")
+        email = cleaned_data.get("email")
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
 
-        if (
-            not self.cleaned_data["username"]
-            or not self.cleaned_data["email"]
-            or not self.cleaned_data["password"]
-        ):
+        if not username or not email or not password1:
             raise forms.ValidationError("모든 필드를 입력해주세요.")
 
-        if password != password_confirm:
+        if password1 != password2:
             raise forms.ValidationError("비밀번호가 일치하지 않습니다.")
 
-        if User.objects.filter(username=self.cleaned_data["username"]).exists():
+        if User.objects.filter(username=username).exists():
             raise forms.ValidationError("이미 존재하는 아이디입니다.")
 
-        if User.objects.filter(email=self.cleaned_data["email"]).exists():
+        if User.objects.filter(email=email).exists():
             raise forms.ValidationError("이미 존재하는 이메일입니다.")
 
         return cleaned_data
@@ -67,7 +65,7 @@ class SignUpForm(forms.Form):
         user = User.objects.create_user(
             username=self.cleaned_data["username"],
             email=self.cleaned_data["email"],
-            password=self.cleaned_data["password"],
+            password=self.cleaned_data["password1"],
         )
         return user
 
