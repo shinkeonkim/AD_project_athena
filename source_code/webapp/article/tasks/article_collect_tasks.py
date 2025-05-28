@@ -1,6 +1,11 @@
 import logging
 from typing import List, Tuple
 
+from article.exceptions import (
+    ArticleCollectException,
+    InvalidProblemIdException,
+    InvalidProblemRangeException,
+)
 from article.services.article_collect_service import ArticleCollectService
 from bs4 import BeautifulSoup
 from celery import shared_task
@@ -13,56 +18,47 @@ logger = logging.getLogger(__name__)
 @shared_task
 def collect_articles_for_problem_list(
     problem_ids: List[int], max_articles: int = 10
-) -> Tuple[int, int]:
+) -> List[int]:
+    """여러 문제에 대한 게시글을 수집하는 태스크"""
     service = ArticleCollectService()
-    success_count = 0
-    failure_count = 0
+    collected_articles = []
 
     for problem_id in problem_ids:
         try:
-            logger.info(f"Starting article collection for problem {problem_id}")
-            articles = service.collect_articles_for_problem(
-                problem_id, max_articles=max_articles
-            )
-            if articles:
-                success_count += 1
-                logger.info(
-                    f"Successfully collected {len(articles)} articles for problem {problem_id}"
+            if problem_id <= 0:
+                raise InvalidProblemIdException(
+                    f"Invalid problem ID: {problem_id}", {"problem_id": problem_id}
                 )
-            else:
-                failure_count += 1
-                logger.warning(f"No articles found for problem {problem_id}")
-
-        except OpenAIError as e:
-            failure_count += 1
-            logger.error(
-                f"OpenAI API error while collecting articles for problem {problem_id}: {str(e)}"
+            articles = service.perform_collect_articles(
+                problem_id=problem_id, max_articles=max_articles
             )
-        except RequestException as e:
-            failure_count += 1
+            collected_articles.extend([article.id for article in articles])
+        except ArticleCollectException as e:
             logger.error(
-                f"Network error while collecting articles for problem {problem_id}: {str(e)}"
+                f"Error collecting articles for problem {problem_id}: {str(e)}"
             )
+            continue
         except Exception as e:
-            failure_count += 1
-            logger.error(
-                f"Unexpected error while collecting articles for problem {problem_id}: {str(e)}",
-                exc_info=True,
-            )
+            logger.error(f"Unexpected error for problem {problem_id}: {str(e)}")
+            continue
 
-    logger.info(
-        f"Article collection completed. Success: {success_count}, Failure: {failure_count}"
-    )
-    return success_count, failure_count
+    return collected_articles
 
 
 @shared_task
 def collect_articles_for_problem_range(
     start_id: int, end_id: int, max_articles: int = 10
-) -> Tuple[int, int]:
+) -> List[int]:
+    """특정 범위의 문제에 대한 게시글을 수집하는 태스크"""
+    if start_id <= 0:
+        raise InvalidProblemRangeException(
+            "Start ID must be greater than 0", {"start_id": start_id}
+        )
+    if end_id < start_id:
+        raise InvalidProblemRangeException(
+            "End ID must be greater than or equal to Start ID",
+            {"start_id": start_id, "end_id": end_id},
+        )
+
     problem_ids = list(range(start_id, end_id + 1))
-    logger.info(
-        f"Starting article collection for problem range {start_id} to {end_id} "
-        f"(total {len(problem_ids)} problems)"
-    )
     return collect_articles_for_problem_list(problem_ids, max_articles=max_articles)

@@ -5,7 +5,18 @@ from urllib.parse import urlparse
 
 import numpy as np
 import requests
+from article.exceptions import (
+    ArticleCollectException,
+    ArticleParsingException,
+    ArticleScrapingException,
+    CodeBlockExtractionException,
+    ContentStructureException,
+    OpenAIServiceException,
+    ProblemRelevanceException,
+    SearchServiceException,
+)
 from article.models import Article
+from article.services.base_service import BaseService
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.db import transaction
@@ -42,8 +53,9 @@ class ArticleStructure(BaseModel):
     additional_tips: str
 
 
-class ArticleCollectService:
+class ArticleCollectService(BaseService):
     def __init__(self):
+        super().__init__()
         self.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
@@ -64,19 +76,104 @@ class ArticleCollectService:
             "parameters": schema,
         }
 
+    def _execute(self, problem_id: int, max_articles: int = 10) -> List[Article]:
+        """실제 게시글 수집 로직을 수행하는 메서드"""
+        return self.collect_articles_for_problem(problem_id, max_articles)
+
+    def perform_collect_articles(
+        self, problem_id: int, max_articles: int = 10
+    ) -> List[Article]:
+        """게시글 수집을 위한 public 메서드"""
+        with transaction.atomic():
+            return self.perform(problem_id, max_articles)
+
+    def collect_articles_for_problem(
+        self, problem_id: int, max_articles: int = 10
+    ) -> List[Article]:
+        """게시글 수집을 위한 메서드"""
+        self.logger.info(
+            f"문제 {problem_id}에 대한 게시글 수집 시작 (최대 {max_articles}개)"
+        )
+
+        problem = Problem.objects.get(boj_id=problem_id)
+        urls = self.search_article_urls(problem_id, max_results=max_articles)
+        articles = []
+
+        for url in urls[:max_articles]:
+            try:
+                data = self.scrape_article(url)
+                if not data:
+                    self.logger.warning(f"게시글 파싱 실패: {url}")
+                    continue
+
+                # 콘텐츠가 문제와 관련 있는지 확인
+                is_related, confidence = self.is_problem_related(
+                    problem, data["content"]
+                )
+                if not is_related:
+                    self.logger.info(
+                        f"관련 없는 게시글 스킵: {url} (신뢰도: {confidence:.2f})"
+                    )
+                    continue
+
+                # 콘텐츠 추출 및 구조화
+                code_blocks = self.extract_code_blocks(data["soup"])
+                structured_content = self.structure_content(data["content"])
+
+                # 구조화된 콘텐츠로 Article 데이터 업데이트
+                article_data = {
+                    "title": data["title"],
+                    "full_url": data["url"],
+                    "site_url": urlparse(data["url"]).netloc,
+                    "author": data.get("author", ""),
+                    "source": data.get("source", ""),
+                    "problem": problem,
+                    "summary": structured_content["summary"],
+                    "approach": structured_content["approach"],
+                    "complexity_analysis": structured_content["complexity_analysis"],
+                    "additional_tips": structured_content["additional_tips"],
+                    "code_blocks": code_blocks,
+                    "relevance_confidence": confidence,
+                }
+
+                article, created = Article.objects.update_or_create(
+                    full_url=data["url"], problem=problem, defaults=article_data
+                )
+
+                if created:
+                    self.logger.info(f"새 Article 저장: {article.full_url}")
+                else:
+                    self.logger.info(f"기존 Article 갱신: {article.full_url}")
+                articles.append(article)
+
+            except ArticleCollectException as e:
+                self.logger.error(
+                    f"게시글 처리 중 오류 발생: {e.message}", extra={"data": e.data}
+                )
+                continue
+
+        self.logger.info(
+            f"문제 {problem_id}에 대해 총 {len(articles)}개 Article 저장 완료"
+        )
+        return articles
+
     def _extract_tool_call(self, response: Any, model: type[BaseModel]) -> BaseModel:
         """OpenAI 응답에서 tool call을 추출하여 Pydantic 모델로 변환합니다."""
         try:
             tool_call = response.choices[0].message.tool_calls[0]
             if tool_call.function.name != model.__name__:
-                raise ValueError(
-                    f"Expected function {model.__name__}, got {tool_call.function.name}"
+                raise OpenAIServiceException(
+                    message=f"Expected function {model.__name__}, got {tool_call.function.name}",
+                    data={"expected": model.__name__, "got": tool_call.function.name},
                 )
 
             arguments = json.loads(tool_call.function.arguments)
             return model.model_validate(arguments)
         except (IndexError, KeyError, json.JSONDecodeError) as e:
-            raise ValueError(f"Failed to extract tool call: {e}")
+            raise OpenAIServiceException(
+                message=f"Failed to extract tool call: {e}",
+                data={"error_type": type(e).__name__, "error": str(e)},
+            )
 
     def check_problem_relevance(
         self, problem_title: str, problem_id: int, content: str
@@ -86,38 +183,46 @@ class ArticleCollectService:
 
     def is_problem_related(self, problem: Problem, content: str) -> Tuple[bool, float]:
         """Check if the content is related to the given problem using embedding similarity."""
-        problem_text = f"{problem.title} {problem.description}"
-        problem_embedding = self.embed_model.encode(problem_text)
-        content_embedding = self.embed_model.encode(content)
-        similarity = self.cosine_similarity(problem_embedding, content_embedding)
+        try:
+            problem_text = f"{problem.title} {problem.description}"
+            problem_embedding = self.embed_model.encode(problem_text)
+            content_embedding = self.embed_model.encode(content)
+            similarity = self.cosine_similarity(problem_embedding, content_embedding)
 
-        # 유사도가 낮으면 LLM으로 더 정확한 분류
-        if similarity < 0.7:
-            response = self.openai_client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"다음 웹페이지가 알고리즘 문제 '{problem.title}' ({problem.boj_id})에 대한 해설인지 판별해주세요.\n\n웹페이지 내용: {content[:1000]}",
-                    }
-                ],
-                tools=[
-                    {
-                        "type": "function",
-                        "function": self._get_function_schema(ProblemRelevance),
-                    }
-                ],
-                tool_choice="auto",
+            # 유사도가 낮으면 LLM으로 더 정확한 분류
+            if similarity < 0.7:
+                try:
+                    response = self.openai_client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": f"다음 웹페이지가 알고리즘 문제 '{problem.title}' ({problem.boj_id})에 대한 해설인지 판별해주세요.\n\n웹페이지 내용: {content[:1000]}",
+                            }
+                        ],
+                        tools=[
+                            {
+                                "type": "function",
+                                "function": self._get_function_schema(ProblemRelevance),
+                            }
+                        ],
+                        tool_choice="auto",
+                    )
+
+                    result = self._extract_tool_call(response, ProblemRelevance)
+                    return result.is_related, result.confidence
+                except Exception as e:
+                    raise ProblemRelevanceException(
+                        message=f"Failed to determine problem relevance: {e}",
+                        data={"problem_id": problem.boj_id, "error": str(e)},
+                    )
+
+            return similarity > 0.7, similarity
+        except Exception as e:
+            raise ProblemRelevanceException(
+                message=f"Error in problem relevance check: {e}",
+                data={"problem_id": problem.boj_id, "error": str(e)},
             )
-
-            try:
-                result = self._extract_tool_call(response, ProblemRelevance)
-                return result.is_related, result.confidence
-            except Exception as e:
-                logging.error(f"Failed to parse problem relevance: {e}")
-                return False, 0.0
-
-        return similarity > 0.7, similarity
 
     def explain_code(self, language: str, code: str) -> CodeExplanation:
         """주어진 코드를 분석하고 설명합니다."""
@@ -127,108 +232,122 @@ class ArticleCollectService:
 
     def extract_code_blocks(self, soup: BeautifulSoup) -> List[Dict[str, str]]:
         """Extract code blocks from HTML content and detect their language."""
-        code_blocks = []
-        seen_codes = set()  # 중복 코드 방지를 위한 set
-        MAX_CODE_BLOCKS = 5  # 최대 코드 블록 수
-        MIN_CODE_LENGTH = 50  # 최소 코드 길이
-        MAX_CODE_LENGTH = 2000  # 최대 코드 길이
+        try:
+            code_blocks = []
+            seen_codes = set()  # 중복 코드 방지를 위한 set
+            MAX_CODE_BLOCKS = 5  # 최대 코드 블록 수
+            MIN_CODE_LENGTH = 50  # 최소 코드 길이
+            MAX_CODE_LENGTH = 2000  # 최대 코드 길이
 
-        logging.info("코드 블록 추출 시작")
+            logging.info("코드 블록 추출 시작")
 
-        # 코드 블록 찾기 (pre, code 태그)
-        for pre in soup.find_all(["pre", "code"]):
-            # 코드 블록의 언어 감지
-            language = None
-            if pre.get("class"):
-                for cls in pre.get("class"):
-                    if cls.startswith("language-"):
-                        language = cls.replace("language-", "")
-                        break
+            # 코드 블록 찾기 (pre, code 태그)
+            for pre in soup.find_all(["pre", "code"]):
+                try:
+                    # 코드 블록의 언어 감지
+                    language = None
+                    if pre.get("class"):
+                        for cls in pre.get("class"):
+                            if cls.startswith("language-"):
+                                language = cls.replace("language-", "")
+                                break
 
-            # 코드 추출
-            code = pre.get_text(strip=True)
+                    # 코드 추출
+                    code = pre.get_text(strip=True)
 
-            # 코드 블록 필터링
-            if not code:
-                logging.debug("빈 코드 블록 발견, 건너뜀")
-                continue
+                    # 코드 블록 필터링
+                    if not code:
+                        logging.debug("빈 코드 블록 발견, 건너뜀")
+                        continue
 
-            if len(code) < MIN_CODE_LENGTH:
-                logging.debug(f"코드가 너무 짧음 (길이: {len(code)}), 건너뜀")
-                continue
+                    if len(code) < MIN_CODE_LENGTH:
+                        logging.debug(f"코드가 너무 짧음 (길이: {len(code)}), 건너뜀")
+                        continue
 
-            if len(code) > MAX_CODE_LENGTH:
-                logging.debug(f"코드가 너무 김 (길이: {len(code)}), 건너뜀")
-                continue
+                    if len(code) > MAX_CODE_LENGTH:
+                        logging.debug(f"코드가 너무 김 (길이: {len(code)}), 건너뜀")
+                        continue
 
-            # 중복 코드 제거
-            if code in seen_codes:
-                logging.debug("중복 코드 블록 발견, 건너뜀")
-                continue
-            seen_codes.add(code)
+                    # 중복 코드 제거
+                    if code in seen_codes:
+                        logging.debug("중복 코드 블록 발견, 건너뜀")
+                        continue
+                    seen_codes.add(code)
 
-            # 언어가 감지되지 않은 경우 코드 내용으로부터 추정
-            if not language:
-                if "def " in code or "import " in code:
-                    language = "python"
-                elif "#include" in code or "int main" in code:
-                    language = "cpp"
-                elif "public class" in code or "import java" in code:
-                    language = "java"
-                else:
-                    language = "unknown"
-                logging.debug(f"언어 자동 감지: {language}")
+                    # 언어가 감지되지 않은 경우 코드 내용으로부터 추정
+                    if not language:
+                        if "def " in code or "import " in code:
+                            language = "python"
+                        elif "#include" in code or "int main" in code:
+                            language = "cpp"
+                        elif "public class" in code or "import java" in code:
+                            language = "java"
+                        else:
+                            language = "unknown"
+                        logging.debug(f"언어 자동 감지: {language}")
 
-            try:
-                logging.info(
-                    f"OpenAI API 호출 시작 - 언어: {language}, 코드 길이: {len(code)}"
-                )
-                response = self.openai_client.chat.completions.create(
-                    model="gpt-4o-mini",
-                    messages=[
-                        {
-                            "role": "user",
-                            "content": f"다음 {language} 코드를 분석하여 설명해주세요. 다음 항목들을 모두 포함해주세요:\n1. 코드의 전체적인 설명 (explanation)\n2. 시간 복잡도 분석 (time_complexity)\n3. 공간 복잡도 분석 (space_complexity)\n4. 주요 포인트들 (key_points)\n\n코드:\n```{language}\n{code}\n```",
-                        }
-                    ],
-                    tools=[
-                        {
-                            "type": "function",
-                            "function": self._get_function_schema(CodeExplanation),
-                        }
-                    ],
-                    tool_choice="auto",
-                )
+                    try:
+                        logging.info(
+                            f"OpenAI API 호출 시작 - 언어: {language}, 코드 길이: {len(code)}"
+                        )
+                        response = self.openai_client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {
+                                    "role": "user",
+                                    "content": f"다음 {language} 코드를 분석하여 설명해주세요. 다음 항목들을 모두 포함해주세요:\n1. 코드의 전체적인 설명 (explanation)\n2. 시간 복잡도 분석 (time_complexity)\n3. 공간 복잡도 분석 (space_complexity)\n4. 주요 포인트들 (key_points)\n\n코드:\n```{language}\n{code}\n```",
+                                }
+                            ],
+                            tools=[
+                                {
+                                    "type": "function",
+                                    "function": self._get_function_schema(
+                                        CodeExplanation
+                                    ),
+                                }
+                            ],
+                            tool_choice="auto",
+                        )
 
-                explanation = self._extract_tool_call(response, CodeExplanation)
-                logging.info(
-                    f"코드 설명 생성 성공 - 언어: {language}, 설명 길이: {len(explanation.explanation)}"
-                )
+                        explanation = self._extract_tool_call(response, CodeExplanation)
+                        logging.info(
+                            f"코드 설명 생성 성공 - 언어: {language}, 설명 길이: {len(explanation.explanation)}"
+                        )
 
-                code_blocks.append(
-                    {
-                        "language": language,
-                        "code": code,
-                        "explanation": explanation.explanation,
-                        "time_complexity": explanation.time_complexity,
-                        "space_complexity": explanation.space_complexity,
-                        "key_points": explanation.key_points,
-                    }
-                )
+                        code_blocks.append(
+                            {
+                                "language": language,
+                                "code": code,
+                                "explanation": explanation.explanation,
+                                "time_complexity": explanation.time_complexity,
+                                "space_complexity": explanation.space_complexity,
+                                "key_points": explanation.key_points,
+                            }
+                        )
 
-                # 최대 코드 블록 수 제한
-                if len(code_blocks) >= MAX_CODE_BLOCKS:
-                    logging.info(
-                        f"최대 코드 블록 수({MAX_CODE_BLOCKS}) 도달, 처리 중단"
-                    )
-                    break
+                        # 최대 코드 블록 수 제한
+                        if len(code_blocks) >= MAX_CODE_BLOCKS:
+                            logging.info(
+                                f"최대 코드 블록 수({MAX_CODE_BLOCKS}) 도달, 처리 중단"
+                            )
+                            break
 
-            except Exception as e:
-                logging.error(f"코드 설명 생성 실패 - 언어: {language}, 에러: {str(e)}")
-                continue
+                    except Exception as e:
+                        logging.error(
+                            f"코드 설명 생성 실패 - 언어: {language}, 에러: {str(e)}"
+                        )
+                        raise CodeBlockExtractionException(
+                            f"Failed to explain code block: {e}"
+                        )
 
-        logging.info(f"코드 블록 추출 완료 - 총 {len(code_blocks)}개 블록 처리됨")
-        return code_blocks
+                except Exception as e:
+                    logging.error(f"코드 블록 처리 중 오류 발생: {e}")
+                    continue
+
+            logging.info(f"코드 블록 추출 완료 - 총 {len(code_blocks)}개 블록 처리됨")
+            return code_blocks
+        except Exception as e:
+            raise CodeBlockExtractionException(f"Error in code block extraction: {e}")
 
     def structure_article(self, content: str) -> ArticleStructure:
         """게시글 내용을 구조화합니다."""
@@ -260,35 +379,39 @@ class ArticleCollectService:
             return result.model_dump()
         except Exception as e:
             logging.error(f"Failed to structure content: {e}")
-            return {
-                "summary": "",
-                "approach": "",
-                "complexity_analysis": "",
-                "additional_tips": "",
-            }
+            raise ContentStructureException(f"Error in content structuring: {e}")
 
-    def search_article_urls(self, problem_id: int, max_results: int = 30):
-        query = f"백준 {problem_id} 해설 OR 풀이"
-        logging.info(f"DuckDuckGo 검색 시작: query={query}, max_results={max_results}")
-        results = []
-        with DDGS() as ddgs:
-            for r in ddgs.text(query, max_results=max_results):
-                url = r.get("href")
-                if url:
-                    logging.info(f"DuckDuckGo 검색 결과 URL: {url}")
-                    results.append(url)
-        logging.info(f"DuckDuckGo 검색 결과 총 {len(results)}개 URL 수집 완료")
-        return results
+    def search_article_urls(self, problem_id: int, max_results: int = 30) -> List[str]:
+        """Search for article URLs related to a problem."""
+        try:
+            query = f"백준 {problem_id} 해설 OR 풀이"
+            self.logger.info(
+                f"DuckDuckGo 검색 시작: query={query}, max_results={max_results}"
+            )
+            results = []
+            with DDGS() as ddgs:
+                for r in ddgs.text(query, max_results=max_results):
+                    url = r.get("href")
+                    if url:
+                        self.logger.info(f"DuckDuckGo 검색 결과 URL: {url}")
+                        results.append(url)
+            self.logger.info(f"DuckDuckGo 검색 결과 총 {len(results)}개 URL 수집 완료")
+            return results
+        except Exception as e:
+            raise SearchServiceException(
+                message=f"Error in article URL search: {e}",
+                data={"problem_id": problem_id, "error": str(e)},
+            )
 
     def scrape_article(self, url: str) -> Optional[Dict]:
         """Scrape article content from any website."""
         try:
             response = requests.get(url, headers=self.headers)
             if response.status_code != 200:
-                logging.warning(
-                    f"Failed to fetch URL: {url}, status code: {response.status_code}"
+                raise ArticleScrapingException(
+                    message=f"Failed to fetch URL: {url}, status code: {response.status_code}",
+                    data={"url": url, "status_code": response.status_code},
                 )
-                return None
 
             soup = BeautifulSoup(response.text, "html.parser")
 
@@ -299,8 +422,9 @@ class ArticleCollectService:
             # 메인 콘텐츠 추출
             body = soup.find("body")
             if not body:
-                logging.warning(f"No body tag found in {url}")
-                return None
+                raise ArticleParsingException(
+                    message=f"No body tag found in {url}", data={"url": url}
+                )
 
             # 불필요한 요소 제거
             for element in body.find_all(
@@ -329,63 +453,15 @@ class ArticleCollectService:
                 "url": url,
                 "source": urlparse(url).netloc,
                 "author": author,
-                "soup": soup,  # BeautifulSoup 객체도 반환
+                "soup": soup,
             }
 
+        except ArticleScrapingException as e:
+            raise
+        except ArticleParsingException as e:
+            raise
         except Exception as e:
-            logging.error(f"Error scraping {url}: {str(e)}")
-            return None
-
-    @transaction.atomic
-    def collect_articles_for_problem(self, problem_id: int, max_articles: int = 10):
-        logging.info(
-            f"문제 {problem_id}에 대한 게시글 수집 시작 (최대 {max_articles}개)"
-        )
-        problem = Problem.objects.get(boj_id=problem_id)
-        urls = self.search_article_urls(problem_id, max_results=max_articles)
-        articles = []
-
-        for url in urls[:max_articles]:
-            data = self.scrape_article(url)
-            if not data:
-                logging.warning(f"게시글 파싱 실패: {url}")
-                continue
-
-            # 콘텐츠가 문제와 관련 있는지 확인
-            is_related, confidence = self.is_problem_related(problem, data["content"])
-            if not is_related:
-                logging.info(f"관련 없는 게시글 스킵: {url} (신뢰도: {confidence:.2f})")
-                continue
-
-            # 콘텐츠 추출 및 구조화
-            code_blocks = self.extract_code_blocks(data["soup"])
-            structured_content = self.structure_content(data["content"])
-
-            # 구조화된 콘텐츠로 Article 데이터 업데이트
-            article_data = {
-                "title": data["title"],
-                "full_url": data["url"],
-                "site_url": urlparse(data["url"]).netloc,
-                "author": data.get("author", ""),
-                "source": data.get("source", ""),
-                "problem": problem,
-                "summary": structured_content["summary"],
-                "approach": structured_content["approach"],
-                "complexity_analysis": structured_content["complexity_analysis"],
-                "additional_tips": structured_content["additional_tips"],
-                "code_blocks": code_blocks,
-                "relevance_confidence": confidence,
-            }
-
-            article, created = Article.objects.update_or_create(
-                full_url=data["url"], problem=problem, defaults=article_data
+            raise ArticleScrapingException(
+                message=f"Error scraping {url}: {str(e)}",
+                data={"url": url, "error": str(e)},
             )
-
-            if created:
-                logging.info(f"새 Article 저장: {article.full_url}")
-            else:
-                logging.info(f"기존 Article 갱신: {article.full_url}")
-            articles.append(article)
-
-        logging.info(f"문제 {problem_id}에 대해 총 {len(articles)}개 Article 저장 완료")
-        return articles
