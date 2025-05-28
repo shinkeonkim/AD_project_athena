@@ -1,6 +1,19 @@
 version: '3.7'
 
 services:
+  nginx:
+    image: nginx:latest
+    container_name: athena-nginx
+    ports:
+      - "8000:80"
+    volumes:
+      - ./environments/dev/nginx.conf:/etc/nginx/nginx.conf
+      - ./environments/dev/default.conf:/etc/nginx/conf.d/default.conf
+      - ./webapp/staticfiles:/app/staticfiles
+      - ./webapp/media:/app/media
+    depends_on:
+      - athena_webapp
+
   athena_webapp:
     container_name: athena_webapp
     build:
@@ -10,12 +23,12 @@ services:
     env_file:
       - .env
     environment:
-      - PORT=${PORT}
+      - PORT=8000
     volumes:
       - .:/app
       - ./environments/dev/start-webapp.sh:/start-webapp.sh
-    ports:
-      - "${PORT}:${PORT}"
+    expose:
+      - "8000"
     depends_on:
       - athena_db
       - redis
