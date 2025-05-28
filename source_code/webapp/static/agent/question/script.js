@@ -1,3 +1,12 @@
+console.log('script.js loaded');
+
+// 전역 별점 상태 변수 선언
+const feedbackState = {
+    selectedRating: 0,
+    isEditing: true,
+    isSubmitting: false
+};
+
 document.addEventListener("DOMContentLoaded", () => {
     // 요소 선택
     const searchInput = document.getElementById("problem-search");
@@ -700,17 +709,11 @@ solution`
                     `;
                     break;
                 case 'COMPLETED':
-                    feedbackContent.innerHTML = `
-                        <div class="feedback-result">
-                            <div class="feedback-text markdown-content text-gray-300">${marked.parse(data.feedback)}</div>
-                        </div>
-                    `;
+                    createFeedbackUI(data.feedback);
                     clearInterval(statusCheckInterval);
                     submitButton.disabled = false;
                     submitButton.classList.remove('loading');
                     submitButton.textContent = '제출하기';
-
-                    // 애니메이션 효과 적용
                     animateOnScroll();
                     break;
                 case 'FAILED':
@@ -772,4 +775,202 @@ solution`
 
     // 초기화 실행
     init();
+
+    // Initialize the shared rating modal
+    window.RatingModal.init({
+        modalId: 'rating-modal',
+        starsId: 'modal-stars',
+        messageId: 'modal-message',
+        submitBtnId: 'modal-submit-btn',
+        closeBtnClass: 'close',
+        onSubmit: async (taskUuid, rating, message, callbacks) => {
+            try {
+                const response = await fetch('/api/agents/question-ratings/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        question_task_uuid: taskUuid,
+                        rating: rating,
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to submit rating');
+                }
+
+                showNotification('피드백이 성공적으로 제출되었습니다.', 'success');
+                callbacks.onDone();
+            } catch (error) {
+                console.error('Error submitting rating:', error);
+                callbacks.onError(error.message || '피드백 제출 중 오류가 발생했습니다.');
+            }
+        }
+    });
+
+    // Update the createFeedbackUI function to use the shared modal
+    function createFeedbackUI(feedback) {
+        feedbackContent.innerHTML = `
+            <div class="feedback-result">
+                <div class="feedback-text markdown-content text-gray-300">${marked.parse(feedback)}</div>
+                <div class="feedback-rating">
+                    <h4 class="text-primary">피드백 평가</h4>
+                    <div class="rating-container">
+                        <div class="stars">
+                            ${[1, 2, 3, 4, 5].map(num => `
+                                <span class="star" data-rating="${num}">★</span>
+                            `).join('')}
+                        </div>
+                        <textarea id="feedbackMessage" class="rating-message" placeholder="피드백에 대한 의견을 남겨주세요 (선택사항)"></textarea>
+                        <button id="submitRatingBtn" class="submit-rating" disabled>평가 제출</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        console.log('[createFeedbackUI] feedback UI created');
+        console.log('[createFeedbackUI] .stars exists:', !!document.querySelector('.stars'));
+        initializeRatingHandlers();
+        updateFeedbackUI();
+    }
+
+    // Update the submitRating function to use the shared modal
+    async function submitRating() {
+        const submitRatingBtn = document.querySelector('#submitRatingBtn');
+        const ratingMessage = document.querySelector('#feedbackMessage');
+
+        // 수정하기 버튼일 경우 편집 모드로 전환
+        if (!feedbackState.isEditing) {
+            feedbackState.isEditing = true;
+            updateFeedbackUI();
+            return;
+        }
+
+        // 평가가 선택되지 않은 경우
+        if (!feedbackState.selectedRating) {
+            showNotification('평가를 선택해주세요.', 'error');
+            return;
+        }
+
+        // 제출 중 상태로 변경
+        feedbackState.isSubmitting = true;
+        updateFeedbackUI();
+
+        try {
+            const response = await fetch('/api/agents/question-ratings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    question_task_uuid: currentTaskUuid,
+                    rating: feedbackState.selectedRating,
+                    message: ratingMessage.value || ''
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to submit rating');
+            }
+
+            showNotification('피드백이 성공적으로 제출되었습니다.', 'success');
+
+            // 제출 완료 상태로 변경
+            feedbackState.isEditing = false;
+            feedbackState.isSubmitting = false;
+            updateFeedbackUI();
+        } catch (error) {
+            console.error('Error submitting rating:', error);
+            showNotification(error.message || '피드백 제출 중 오류가 발생했습니다.', 'error');
+
+            // 에러 발생 시 상태 복구
+            feedbackState.isSubmitting = false;
+            updateFeedbackUI();
+        }
+    }
+
+    // Update the initializeRatingHandlers function to use the shared modal
+    function initializeRatingHandlers() {
+        const stars = document.querySelectorAll('.star');
+        const submitRatingBtn = document.querySelector('#submitRatingBtn');
+
+        if (!stars.length) {
+            console.log('No .star elements found!');
+            return;
+        } else {
+            console.log('Found', stars.length, 'star elements. Binding direct events.');
+        }
+
+        stars.forEach(star => {
+            star.addEventListener('mouseover', () => {
+                if (!feedbackState.isEditing) return;
+                const rating = parseInt(star.dataset.rating);
+                console.log('[mouseover] rating:', rating);
+                updateStars(rating);
+            });
+
+            star.addEventListener('mouseout', () => {
+                if (!feedbackState.isEditing) return;
+                console.log('[mouseout] selectedRating:', feedbackState.selectedRating);
+                updateStars(feedbackState.selectedRating);
+            });
+
+            star.addEventListener('click', () => {
+                if (!feedbackState.isEditing) return;
+                feedbackState.selectedRating = parseInt(star.dataset.rating);
+                console.log('[click] selectedRating set to:', feedbackState.selectedRating);
+                updateFeedbackUI();
+            });
+        });
+
+        if (submitRatingBtn) {
+            console.log('submitRatingBtn found, binding click event.');
+            submitRatingBtn.addEventListener('click', submitRating);
+        } else {
+            console.log('No #submitRatingBtn found!');
+        }
+    }
+
+    // 별점 업데이트 함수
+    function updateStars(rating) {
+        const stars = document.querySelectorAll('.star');
+        console.log('[updateStars] rating:', rating);
+        stars.forEach(star => {
+            const starRating = parseInt(star.dataset.rating);
+            if (starRating <= rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    // 피드백 UI 업데이트 함수
+    function updateFeedbackUI() {
+        const submitRatingBtn = document.querySelector('#submitRatingBtn');
+        const ratingMessage = document.querySelector('#feedbackMessage');
+        const stars = document.querySelectorAll('.star');
+
+        console.log('[updateFeedbackUI] selectedRating:', feedbackState.selectedRating, 'isEditing:', feedbackState.isEditing);
+
+        submitRatingBtn.disabled = feedbackState.isSubmitting || feedbackState.selectedRating === 0;
+        submitRatingBtn.textContent = feedbackState.isSubmitting ? '제출 중...' :
+                                    feedbackState.isEditing ? '평가 제출' : '수정하기';
+
+        ratingMessage.disabled = !feedbackState.isEditing;
+        ratingMessage.style.opacity = feedbackState.isEditing ? '1' : '0.5';
+        ratingMessage.style.cursor = feedbackState.isEditing ? 'text' : 'not-allowed';
+
+        stars.forEach(star => {
+            star.style.pointerEvents = feedbackState.isEditing ? 'auto' : 'none';
+            star.style.cursor = feedbackState.isEditing ? 'pointer' : 'not-allowed';
+        });
+
+        updateStars(feedbackState.selectedRating);
+    }
 });

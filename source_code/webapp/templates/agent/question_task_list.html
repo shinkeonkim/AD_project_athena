@@ -1,9 +1,11 @@
 {% extends "base.html" %}
 {% load static %}
+{% load agent_extras %}
 
 {% block head %}
 <link rel="stylesheet" href="{% static 'main/styles.css' %}?v=1.0.0">
 <link rel="stylesheet" href="{% static 'agent/question_task_list/styles.css' %}?v=1.0.0">
+<link rel="stylesheet" href="{% static 'agent/shared/rating_modal.css' %}">
 <!-- highlight.js for code highlighting -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
 <!-- marked.js for markdown rendering -->
@@ -35,11 +37,31 @@
                                     <span class="text-gray-300">{{ task.created_at|date:"Y-m-d H:i" }}</span>
                                     <span class="status-badge {{ task.status|lower }}">{{ task.status }}</span>
                                 </div>
+                                {% if task.user_ratings and task.user_ratings.0 %}
+                                    <span class="rating-stars" data-rating="{{ task.user_ratings.0.rating }}">
+                                        {% for i in 1|make_range:5 %}
+                                            <span class="star{% if i <= task.user_ratings.0.rating %} active{% endif %}">★</span>
+                                        {% endfor %}
+                                    </span>
+                                {% endif %}
                             </div>
                             <div class="task-actions">
                                 <button class="btn btn-secondary expand-btn" data-task-id="{{ task.id }}">
                                     더보기
                                 </button>
+                                {% if task.user_ratings and task.user_ratings.0 %}
+                                    <button class="btn btn-secondary edit-rating-btn"
+                                            data-task-uuid="{{ task.uuid }}"
+                                            data-rating="{{ task.user_ratings.0.rating }}"
+                                            data-message="{{ task.user_ratings.0.message|default_if_none:'' }}">
+                                        평가 수정
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-primary rate-btn"
+                                            data-task-uuid="{{ task.uuid }}">
+                                        평가하기
+                                    </button>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -126,8 +148,22 @@
         </div>
     </div>
 </div>
+
+<!-- 평가/수정 Modal -->
+<div id="rating-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>피드백 평가</h3>
+        <div class="rating-container">
+            <div id="modal-stars" class="stars"></div>
+            <textarea id="modal-message" class="rating-message" placeholder="피드백에 대한 의견을 남겨주세요 (선택사항)"></textarea>
+            <button id="modal-submit-btn" class="modal-submit-btn">평가 제출</button>
+        </div>
+    </div>
+</div>
 {% endblock content %}
 
 {% block script %}
+<script src="{% static 'agent/shared/rating_modal.js' %}"></script>
 <script src="{% static 'agent/question_task_list/script.js' %}?v=1.0.0"></script>
 {% endblock script %}

@@ -33,7 +33,7 @@
                             <div class="search-container">
                                 <label for="problem-search" class="text-primary font-bold">문제 검색:</label>
                                 <div class="autocomplete-wrapper">
-                                    <input type="text" id="problem-search" class="glass-light" placeholder="문제 이름을 입력하세요">
+                                    <input type="text" id="problem-search" class="glass-light" placeholder="문제 이름을 입력하세요" autocomplete="off">
                                     <div id="autocomplete-results" class="autocomplete-results glass-dark"></div>
                                 </div>
                             </div>
@@ -107,6 +107,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/foldgutter.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/brace-fold.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/fold/indent-fold.min.js"></script>
+    <script src="{% static 'agent/shared/rating_modal.js' %}?v=1.0.0"></script>
     <script src="{% static 'main/script.js' %}?v=1.0.0"></script>
     <script src="{% static 'agent/question/script.js' %}?v=1.0.0"></script>
 </body>

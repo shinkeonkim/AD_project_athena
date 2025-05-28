@@ -1,21 +1,30 @@
-from agent.models import QuestionTask
+from agent.models import QuestionTask, QuestionTaskRating
 from django.core.paginator import Paginator
+from django.db.models import Prefetch
 from django.shortcuts import redirect, render
 
 
 def question(request):
     if not request.user.is_authenticated:
-        return redirect("login")
+        return redirect("user:signin")
 
     return render(request, "agent/question.html")
 
 
 def question_task_list(request):
     if not request.user.is_authenticated:
-        return redirect("login")
+        return redirect("user:signin")
 
-    question_tasks = QuestionTask.objects.filter(user=request.user).order_by(
-        "-created_at"
+    question_tasks = (
+        QuestionTask.objects.filter(user=request.user)
+        .order_by("-created_at")
+        .prefetch_related(
+            Prefetch(
+                "ratings",
+                queryset=QuestionTaskRating.objects.filter(user=request.user),
+                to_attr="user_ratings",
+            )
+        )
     )
 
     paginator = Paginator(question_tasks, 5)

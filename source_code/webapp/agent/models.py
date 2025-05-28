@@ -1,6 +1,7 @@
 import uuid
 
 from config.models import BaseModel
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -26,3 +27,17 @@ class QuestionTask(BaseModel):
     )
     feedback = models.TextField(null=True, blank=True)
     code_result = models.TextField(null=True, blank=True)
+
+
+class QuestionTaskRating(BaseModel):
+    user = models.ForeignKey("user.User", on_delete=models.CASCADE)
+    question_task = models.ForeignKey(
+        QuestionTask, on_delete=models.CASCADE, related_name="ratings"
+    )
+    message = models.TextField(null=True, blank=True)
+    rating = models.IntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(5)]
+    )
+
+    class Meta:
+        unique_together = ["user", "question_task"]

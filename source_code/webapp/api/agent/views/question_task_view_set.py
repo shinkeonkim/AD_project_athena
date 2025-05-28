@@ -1,10 +1,11 @@
-from agent.models import QuestionTask, QuestionTaskStatus
+from agent.models import QuestionTask, QuestionTaskRating
 from agent.tasks import process_question_task
-from api.agent.serializers import QuestionTaskSerializer
+from api.agent.serializers import QuestionTaskRatingSerializer, QuestionTaskSerializer
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from user.models.ticket import Ticket
@@ -54,6 +55,7 @@ class QuestionTaskViewSet(viewsets.ModelViewSet):
         task = get_object_or_404(QuestionTask, uuid=pk, user=user)
         return Response(
             {
+                "id": task.id,
                 "status": task.status,
                 "feedback": task.feedback if hasattr(task, "feedback") else None,
                 "code_result": (

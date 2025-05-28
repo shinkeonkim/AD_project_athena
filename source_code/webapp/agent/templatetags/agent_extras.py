@@ -19,3 +19,9 @@ def problem_content(value):
 
     # Mark the result as safe HTML
     return mark_safe(decoded)
+
+
+@register.filter
+def make_range(value, arg):
+    """Return a range from value to arg (inclusive)."""
+    return range(int(value), int(arg) + 1)

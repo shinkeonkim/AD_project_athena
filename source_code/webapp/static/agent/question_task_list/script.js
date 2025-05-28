@@ -77,4 +77,88 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.style.display = 'block';
         });
     });
+
+    // Initialize the shared rating modal
+    window.RatingModal.init({
+        modalId: 'rating-modal',
+        starsId: 'modal-stars',
+        messageId: 'modal-message',
+        submitBtnId: 'modal-submit-btn',
+        closeBtnClass: 'close',
+        onSubmit: function(taskUuid, rating, message, callbacks) {
+            fetch('/api/agents/question-ratings/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    question_task_uuid: taskUuid,
+                    rating: rating,
+                    message: message
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    callbacks.onError(data.error);
+                } else {
+                    alert('평가가 저장되었습니다!');
+                    location.reload();
+                    callbacks.onDone();
+                }
+            })
+            .catch(error => {
+                callbacks.onError('오류가 발생했습니다.');
+            });
+        }
+    });
+
+    // 평가/수정 버튼 클릭 시 Modal 오픈 (이벤트 위임)
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('rate-btn') || e.target.classList.contains('edit-rating-btn')) {
+            const taskUuid = e.target.dataset.taskUuid;
+            const rating = parseInt(e.target.dataset.rating) || 0;
+            const message = e.target.dataset.message || '';
+            window.RatingModal.open(taskUuid, rating, message, {
+                modalId: 'rating-modal',
+                starsId: 'modal-stars',
+                messageId: 'modal-message',
+                submitBtnId: 'modal-submit-btn'
+            });
+        }
+    });
+
+    // CSRF 토큰 함수
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // 모든 .close 버튼에 대해 각각 이벤트를 바인딩
+    document.querySelectorAll('.close').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const modal = btn.closest('.modal');
+            if (modal) modal.style.display = 'none';
+        });
+    });
+
+    // 모달 외부 클릭시 모든 모달 닫기
+    window.addEventListener('click', function(event) {
+        document.querySelectorAll('.modal').forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    });
 });
