@@ -902,3 +902,7 @@ header.sticky {
 .breadcrumb-current {
   color: var(--gray-300);
 }
+
+.mt-auto {
+  margin-top: auto;
+}
