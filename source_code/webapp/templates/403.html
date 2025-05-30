@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block header %}
+{% include "_navbar.html" %}
+{% endblock header %}
+
+{% block content %}
+<div class="content-main min-h-screen flex flex-col">
+    <section class="relative overflow-hidden py-20 mt-10">
+        <div class="container relative z-10 mx-auto px-4">
+            <div class="text-center space-y-8">
+                <div class="glass-light inline-block px-4 py-2 rounded-full">
+                    <span class="text-primary">403 Forbidden</span>
+                </div>
+                <h1 class="text-4xl font-bold leading-tight tracking-tighter md-text-5xl lg-text-6xl">
+                    <span class="text-white">접근 </span>
+                    <span class="text-primary">권한이 없습니다</span>
+                </h1>
+                <p class="max-w-600 mx-auto text-lg text-gray-300">
+                    {% if not request.user.is_authenticated %}
+                        죄송합니다. 이 페이지에 접근하기 위해서는 로그인이 필요합니다.<br>
+                        로그인 후 다시 시도해 주시기 바랍니다.
+                    {% else %}
+                        죄송합니다. 이 페이지에 접근할 수 있는 권한이 없습니다.<br>
+                        다른 계정으로 접근해 주시기 바랍니다.
+                    {% endif %}
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="/" class="btn btn-primary glow">홈으로 돌아가기</a>
+                    {% if not request.user.is_authenticated %}
+                        <a href="{% url 'accounts:login' %}" class="btn btn-primary">로그인하기</a>
+                    {% else %}
+                        <button onclick="window.location.reload()" class="btn btn-outline">새로고침</button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 장식용 요소 -->
+        <div class="absolute top-1/4 left-10 h-40 w-40 rounded-full bg-primary opacity-5 blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-10 h-60 w-60 rounded-full bg-primary opacity-5 blur-3xl"></div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="glass-dark py-12 mt-auto">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <div class="mb-4 flex items-center justify-center gap-2">
+                    <div class="relative h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-primary to-primary-50 glow">
+                        <div class="absolute inset-0 flex items-center justify-center text-bg-dark">
+                            <span class="text-lg font-bold">A</span>
+                        </div>
+                    </div>
+                    <span class="text-xl font-bold text-white">Athena</span>
+                </div>
+                <p class="text-gray-400">&copy; {% now "Y" %} Athena. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock content %}
