@@ -64,10 +64,12 @@ class ArticleCollectService(BaseService):
         )
         self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
-    def cosine_similarity(self, a: np.ndarray, b: np.ndarray) -> float:
+    @classmethod
+    def cosine_similarity(cls, a: np.ndarray, b: np.ndarray) -> float:
         return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-    def _get_function_schema(self, model: type[BaseModel]) -> Dict[str, Any]:
+    @classmethod
+    def _get_function_schema(cls, model: type[BaseModel]) -> Dict[str, Any]:
         """Pydantic 모델로부터 OpenAI function schema를 생성합니다."""
         schema = model.model_json_schema()
         return {
@@ -187,7 +189,9 @@ class ArticleCollectService(BaseService):
             problem_text = f"{problem.title} {problem.description}"
             problem_embedding = self.embed_model.encode(problem_text)
             content_embedding = self.embed_model.encode(content)
-            similarity = self.cosine_similarity(problem_embedding, content_embedding)
+            similarity = self.__class__.cosine_similarity(
+                problem_embedding, content_embedding
+            )
 
             # 유사도가 낮으면 LLM으로 더 정확한 분류
             if similarity < 0.7:
@@ -203,7 +207,9 @@ class ArticleCollectService(BaseService):
                         tools=[
                             {
                                 "type": "function",
-                                "function": self._get_function_schema(ProblemRelevance),
+                                "function": self.__class__._get_function_schema(
+                                    ProblemRelevance
+                                ),
                             }
                         ],
                         tool_choice="auto",
@@ -301,7 +307,7 @@ class ArticleCollectService(BaseService):
                             tools=[
                                 {
                                     "type": "function",
-                                    "function": self._get_function_schema(
+                                    "function": self.__class__._get_function_schema(
                                         CodeExplanation
                                     ),
                                 }
@@ -369,7 +375,9 @@ class ArticleCollectService(BaseService):
                 tools=[
                     {
                         "type": "function",
-                        "function": self._get_function_schema(ArticleStructure),
+                        "function": self.__class__._get_function_schema(
+                            ArticleStructure
+                        ),
                     }
                 ],
                 tool_choice="auto",
