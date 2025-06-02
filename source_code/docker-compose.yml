@@ -34,6 +34,8 @@ services:
       - redis
     entrypoint:
       - /start-webapp.sh
+    networks:
+      - judging-network
 
   athena_db:
     build:
@@ -152,3 +154,7 @@ volumes:
   postgres_data:
   postgres_test_data:
   # ollama_data:
+
+networks:
+  judging-network:
+    external: true
