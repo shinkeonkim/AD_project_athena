@@ -709,7 +709,7 @@ solution`
                     `;
                     break;
                 case 'COMPLETED':
-                    createFeedbackUI(data.feedback);
+                    createFeedbackUI(data.feedback, data.code_result);
                     clearInterval(statusCheckInterval);
                     submitButton.disabled = false;
                     submitButton.classList.remove('loading');
@@ -813,10 +813,33 @@ solution`
     });
 
     // Update the createFeedbackUI function to use the shared modal
-    function createFeedbackUI(feedback) {
+    function createFeedbackUI(feedback, codeResult) {
+        let codeResultHTML = '';
+        if (codeResult) {
+            try {
+                const result = typeof codeResult === 'string' ? JSON.parse(codeResult) : codeResult;
+                codeResultHTML = `
+                    <div class="code-result glass-light">
+                        <h4 class="text-primary">실행 결과 상세</h4>
+                        <ul class="text-gray-300">
+                            <li><b>입력:</b> <pre>${(result.inputs || []).join('\n')}</pre></li>
+                            <li><b>기대 출력:</b> <pre>${(result.expected_output || []).join('\n')}</pre></li>
+                            <li><b>실제 출력:</b> <pre>${result.actual_output || ''}</pre></li>
+                            <li><b>stdout:</b> <pre>${result.stdout || ''}</pre></li>
+                            <li><b>stderr:</b> <pre>${result.stderr || ''}</pre></li>
+                            <li><b>에러 메시지:</b> <pre>${result.error_message || ''}</pre></li>
+                        </ul>
+                    </div>
+                `;
+            } catch (e) {
+                codeResultHTML = `<div class="code-result glass-light"><b>실행 결과 파싱 오류</b></div>`;
+            }
+        }
+
         feedbackContent.innerHTML = `
+            ${codeResultHTML}
             <div class="feedback-result">
-                <div class="feedback-text markdown-content text-gray-300">${marked.parse(feedback)}</div>
+                <div class="feedback-text markdown-content text-gray-300">${marked.parse(feedback || '')}</div>
                 <div class="feedback-rating">
                     <h4 class="text-primary">피드백 평가</h4>
                     <div class="rating-container">

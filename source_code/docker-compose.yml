@@ -13,6 +13,14 @@ services:
       - ./webapp/media:/app/media
     depends_on:
       - athena_webapp
+      - athena_db
+      - athena_test_db
+      - redis
+      - celery-worker
+      - celery-beat
+      - flower
+    networks:
+      - judging-network
 
   athena_webapp:
     container_name: athena_webapp
@@ -38,6 +46,7 @@ services:
       - judging-network
 
   athena_db:
+    container_name: athena_db
     build:
       context: .
       dockerfile: ./environments/dev/postgres.Dockerfile
@@ -58,12 +67,14 @@ services:
       - ./environments/dev/init-pg-extensions.sh:/docker-entrypoint-initdb.d/init-pg-extensions.sh
       - postgres_data:/var/lib/postgresql/data/
     command: -p ${POSTGRES_PORT}
+    networks:
+      - judging-network
 
   athena_test_db:
     build:
       context: .
       dockerfile: ./environments/test/postgres.Dockerfile
-    container_name: db_test
+    container_name: athena_test_db
     expose:
       - "${TEST_POSTGRES_PORT}"
     ports:
@@ -81,6 +92,8 @@ services:
       - ./environments/test/init-pg-extensions.sh:/docker-entrypoint-initdb.d/init-pg-extensions.sh
       - postgres_test_data:/var/lib/postgresql/data/
     command: -p ${TEST_POSTGRES_PORT}
+    networks:
+      - judging-network
 
   redis:
     image: redis:7
@@ -92,6 +105,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    networks:
+      - judging-network
 
   celery-worker:
     container_name: athena-celery-worker
@@ -107,6 +122,8 @@ services:
       - athena_db
       - redis
     command: celery -A config worker -l INFO
+    networks:
+      - judging-network
 
   celery-beat:
     container_name: athena-celery-beat
@@ -123,6 +140,8 @@ services:
       - redis
       - celery-worker
     command: celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    networks:
+      - judging-network
 
   flower:
     container_name: athena-flower
@@ -138,6 +157,8 @@ services:
       - redis
       - celery-worker
     command: celery -A config flower --port=5555
+    networks:
+      - judging-network
 
   # ollama:
   #   image: ollama/ollama:latest

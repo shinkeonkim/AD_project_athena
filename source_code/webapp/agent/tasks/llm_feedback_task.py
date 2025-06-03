@@ -4,13 +4,14 @@ import os
 
 import requests
 from agent.models import QuestionTask, QuestionTaskStatus
+from agent.services.code_judge_service import CodeJudgeService
 from article.models import Article
 from celery import shared_task
 from django.conf import settings
 from django.db import transaction
 from user.models import Ticket
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,39 @@ def process_question_task(task_uuid):
     logger.info(f"Task 상태 업데이트: IN_PROGRESS - Problem: {task.problem.title}")
 
     try:
+        # 1. Judge code for all test cases first
+        test_cases = list(task.problem.test_cases.all())
+        judge_results = []
+        for tc in test_cases:
+            inputs = tc.input_data.split("\n") if tc.input_data else []
+            expected_output = tc.output_data.split("\n") if tc.output_data else []
+            result = CodeJudgeService().execute(
+                language=task.language,
+                code=task.code,
+                expected_output=expected_output,
+                timeout_seconds=5,
+                memory_limit_mb=128,
+                inputs=inputs,
+            )
+            judge_results.append(result)
+            if not getattr(result, "correct", False):
+                task.feedback = "반례 테스트케이스가 존재합니다. 해당 테스트케이스를 고려하여 문제를 다시 풀어보세요."
+                task.code_result = json.dumps(
+                    {
+                        "inputs": inputs,
+                        "expected_output": expected_output,
+                        "actual_output": getattr(result, "actual_output", ""),
+                        "stdout": getattr(result, "stdout", ""),
+                        "stderr": getattr(result, "stderr", ""),
+                        "error_message": getattr(result, "error_message", ""),
+                    },
+                    ensure_ascii=False,
+                )
+                task.status = QuestionTaskStatus.COMPLETED
+                task.save()
+                logger.info("Judge에서 정답이 아님. LLM 호출 없이 종료.")
+                return
+
         # 관련 Article 정보 수집
         logger.info(f"관련 Article 정보 수집 시작 - Problem: {task.problem.title}")
         related_articles = Article.objects.filter(
