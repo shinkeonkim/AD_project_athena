@@ -202,5 +202,6 @@ class ProblemInfoCollectService:
                     problem=problem,
                     input_data=input_data.text.strip(),
                     output_data=output_data.text.strip(),
+                    is_official=True,
                 )
             return problem

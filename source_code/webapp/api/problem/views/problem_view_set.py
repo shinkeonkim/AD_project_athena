@@ -48,7 +48,7 @@ class ProblemViewSet(viewsets.ViewSet):
                 "extra_information": problem.extra_information,
                 "test_cases": [
                     {"input": test_case.input_data, "output": test_case.output_data}
-                    for test_case in problem.test_cases.all()
+                    for test_case in problem.test_cases.official()
                 ],
             }
             return Response(problem_data, status=status.HTTP_200_OK)
