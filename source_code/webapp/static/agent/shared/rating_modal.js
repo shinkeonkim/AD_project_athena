@@ -61,8 +61,8 @@
 
     function bindHandlers(config) {
         const modal = document.getElementById(config.modalId);
+        if (!modal) return;
         const closeBtn = modal.querySelector('.' + config.closeBtnClass);
-        const starsDiv = document.getElementById(config.starsId);
         const messageInput = document.getElementById(config.messageId);
         const submitBtn = document.getElementById(config.submitBtnId);
         if (closeBtn) closeBtn.onclick = () => closeModal(config);

@@ -763,8 +763,12 @@ solution`
     // 창 크기 변경 시 레이아웃 조정
     window.addEventListener('resize', () => {
         if (window.innerWidth <= 1024) {
-            problemInfo.style.cssText = 'height: auto; min-height: 200px;';
-            feedbackArea.style.cssText = 'height: auto; min-height: 200px;';
+            if (problemInfo) {
+                problemInfo.style.cssText = 'height: auto; min-height: 200px;';
+            }
+            if (feedbackArea) {
+                feedbackArea.style.cssText = 'height: auto; min-height: 200px;';
+            }
         }
     });
 
@@ -821,7 +825,7 @@ solution`
                 codeResultHTML = `
                     <div class="code-result glass-light">
                         <h4 class="text-primary">실행 결과 상세</h4>
-                        <ul class="text-gray-300">
+                        <ul class="text-gray-300 mt-2">
                             <li><b>입력:</b> <pre>${(result.inputs || []).join('\n')}</pre></li>
                             <li><b>기대 출력:</b> <pre>${(result.expected_output || []).join('\n')}</pre></li>
                             <li><b>실제 출력:</b> <pre>${result.actual_output || ''}</pre></li>
@@ -837,10 +841,10 @@ solution`
         }
 
         feedbackContent.innerHTML = `
-            ${codeResultHTML}
             <div class="feedback-result">
                 <div class="feedback-text markdown-content text-gray-300">${marked.parse(feedback || '')}</div>
-                <div class="feedback-rating">
+                ${codeResultHTML}
+                <div class="feedback-rating glass-light">
                     <h4 class="text-primary">피드백 평가</h4>
                     <div class="rating-container">
                         <div class="stars">

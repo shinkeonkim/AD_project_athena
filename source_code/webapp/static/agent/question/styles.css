@@ -354,7 +354,6 @@ label {
 .problem-content {
   flex: 1;
   overflow-y: auto;
-  margin-top: 15px;
 }
 
 .feedback-area {
@@ -369,7 +368,6 @@ label {
 .markdown-content {
   flex: 1;
   overflow-y: auto;
-  margin-top: 15px;
   line-height: 1.6;
 }
 
@@ -593,29 +591,30 @@ label {
 
 .tab-content {
   flex: 1;
-  overflow: hidden;
   position: relative;
+  height: 100%;
 }
 
 .tab-pane {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
-  opacity: 0;
-  visibility: hidden;
   transition: all 0.3s;
-  overflow-y: auto;
+  overflow-y: scroll;
+  display: none;
+  padding: 1rem;
 }
 
 .tab-pane.active {
   opacity: 1;
-  visibility: visible;
+  display: block;
 }
 
 /* 반응형 디자인 */
 @media (max-width: 1024px) {
+  .tab-pane {
+    max-height: 200px;
+  }
+
   .coding-container {
     flex-direction: column;
     height: auto;
@@ -720,4 +719,9 @@ label {
 .submit-rating:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.code-result {
+  padding: 1rem;
+  border-radius: 0.5rem;
 }
