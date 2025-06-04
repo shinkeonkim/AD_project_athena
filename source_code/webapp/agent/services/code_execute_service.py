@@ -37,6 +37,8 @@ class CodeExecuteService(BaseService):
         version = {
             "python": "3.12",
             "ruby": "3.2",
+            "cpp": "23",
+            "java": "15",
         }
 
         request = executor_pb2.ExecuteRequest(
